@@ -1,17 +1,41 @@
 import { FundHolding } from "@/types/fund";
 
-const FUND_API = "https://fundgz.1702.top/api/v2/fund";
+interface FundData {
+  fundcode: string;
+  name: string;
+  jzrq: string;
+  dwjz: string;
+  gsz: string;
+  gszzl: string;
+  gztime: string;
+}
 
-interface FundApiResponse {
-  code: number;
-  data: {
-    fundcode: string;
-    name: string;
-    dwjz: string;    // 单位净值
-    gsz: string;     // 估算净值
-    gszzl: string;   // 估算涨跌幅
-    gztime: string;  // 估算时间
-  };
+function fetchJsonp(url: string, callbackName: string): Promise<FundData> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("请求超时"));
+    }, 8000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete (window as any)[callbackName];
+      script.remove();
+    }
+
+    (window as any)[callbackName] = (data: FundData) => {
+      cleanup();
+      resolve(data);
+    };
+
+    script.src = url;
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("请求失败"));
+    };
+    document.head.appendChild(script);
+  });
 }
 
 export async function fetchFundInfo(code: string): Promise<{
@@ -22,17 +46,16 @@ export async function fetchFundInfo(code: string): Promise<{
   updateTime: string;
 } | null> {
   try {
-    const res = await fetch(`${FUND_API}/${code}`);
-    if (!res.ok) return null;
-    const json: FundApiResponse = await res.json();
-    if (json.code !== 200 || !json.data) return null;
-    const d = json.data;
+    const cbName = `jsonpgz`;
+    const url = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+    const data = await fetchJsonp(url, cbName);
+    if (!data || !data.fundcode) return null;
     return {
-      name: d.name,
-      nav: parseFloat(d.dwjz),
-      estimatedNav: parseFloat(d.gsz),
-      changePercent: parseFloat(d.gszzl),
-      updateTime: d.gztime,
+      name: data.name,
+      nav: parseFloat(data.dwjz),
+      estimatedNav: parseFloat(data.gsz),
+      changePercent: parseFloat(data.gszzl),
+      updateTime: data.gztime,
     };
   } catch {
     return null;
