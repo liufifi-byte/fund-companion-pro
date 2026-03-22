@@ -6,15 +6,27 @@ import { fetchFundInfo, fetchStockInfo, normalizeStockSymbol } from "@/lib/fund-
 import { FundHolding, AssetType } from "@/types/fund";
 import { toast } from "sonner";
 
+export type Market = "cn_fund" | "cn_stock" | "hk" | "us";
+
 interface AddFundFormProps {
   onAdd: (holding: FundHolding) => void;
 }
 
+const MARKET_OPTIONS: { value: Market; label: string; placeholder: string }[] = [
+  { value: "cn_fund", label: "场外基金", placeholder: "如 110011" },
+  { value: "cn_stock", label: "A股", placeholder: "如 600519" },
+  { value: "hk", label: "港股", placeholder: "如 0700 / 9988" },
+  { value: "us", label: "美股", placeholder: "如 AAPL / QQQ" },
+];
+
 export default function AddFundForm({ onAdd }: AddFundFormProps) {
   const [code, setCode] = useState("");
   const [amount, setAmount] = useState("");
-  const [assetType, setAssetType] = useState<AssetType>("fund");
+  const [market, setMarket] = useState<Market>("cn_fund");
   const [loading, setLoading] = useState(false);
+
+  const isFund = market === "cn_fund";
+  const currentOption = MARKET_OPTIONS.find((m) => m.value === market)!;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +34,10 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
     const numAmount = parseFloat(amount);
 
     if (!trimmedCode) {
-      toast.error(assetType === "fund" ? "请输入6位基金代码" : "请输入股票代码");
+      toast.error("请输入代码");
       return;
     }
-    if (assetType === "fund" && trimmedCode.length !== 6) {
+    if (isFund && trimmedCode.length !== 6) {
       toast.error("请输入6位基金代码");
       return;
     }
@@ -36,7 +48,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
 
     setLoading(true);
 
-    if (assetType === "fund") {
+    if (isFund) {
       const info = await fetchFundInfo(trimmedCode);
       setLoading(false);
       if (!info) {
@@ -57,11 +69,11 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
       onAdd(holding);
       toast.success(`已添加基金 ${info.name}`);
     } else {
-      const symbol = normalizeStockSymbol(trimmedCode);
+      const symbol = normalizeStockSymbol(trimmedCode, market);
       const info = await fetchStockInfo(symbol);
       setLoading(false);
       if (!info) {
-        toast.error("未找到该股票，请检查代码（如 AAPL, 600519, 0700.HK）");
+        toast.error(`未找到该股票 (${symbol})，请检查代码`);
         return;
       }
       const holding: FundHolding = {
@@ -86,43 +98,35 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {/* Type toggle */}
+      {/* Market toggle */}
       <div className="flex gap-1 p-0.5 bg-muted rounded-lg w-fit">
-        <button
-          type="button"
-          onClick={() => setAssetType("fund")}
-          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-            assetType === "fund"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          场外基金
-        </button>
-        <button
-          type="button"
-          onClick={() => setAssetType("stock")}
-          className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-            assetType === "stock"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          股票 / ETF
-        </button>
+        {MARKET_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => { setMarket(opt.value); setCode(""); }}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              market === opt.value
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
 
       <div className="flex gap-3 items-end">
         <div className="flex-1 min-w-0">
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            {assetType === "fund" ? "基金代码" : "股票代码"}
+            {isFund ? "基金代码" : "股票代码"}
           </label>
           <Input
-            placeholder={assetType === "fund" ? "如 110011" : "如 AAPL / 600519 / 0700.HK"}
+            placeholder={currentOption.placeholder}
             value={code}
             onChange={(e) =>
               setCode(
-                assetType === "fund"
+                isFund
                   ? e.target.value.replace(/\D/g, "").slice(0, 6)
                   : e.target.value.slice(0, 12)
               )

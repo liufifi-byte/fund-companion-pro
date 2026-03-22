@@ -91,17 +91,30 @@ export async function fetchStockInfo(symbol: string): Promise<{
   }
 }
 
-/** Convert stock symbol input: A-share codes get .SS/.SZ suffix */
-export function normalizeStockSymbol(input: string): string {
+/** Convert stock symbol input based on selected market */
+export function normalizeStockSymbol(input: string, market: string): string {
   const s = input.trim().toUpperCase();
-  // Already has suffix like AAPL, 0700.HK, 600519.SS
-  if (/[A-Z]/.test(s) && !/^\d{6}$/.test(s)) return s;
-  // Pure 6-digit number → A-share stock
-  if (/^\d{6}$/.test(s)) {
-    // 6/9 → Shanghai, 0/3 → Shenzhen
-    return s.startsWith("6") || s.startsWith("9") ? `${s}.SS` : `${s}.SZ`;
+  // Already has exchange suffix → use as-is
+  if (s.includes(".")) return s;
+
+  switch (market) {
+    case "cn_stock": {
+      // A-share: 6-digit code, 6/9→Shanghai, 0/3→Shenzhen
+      const code = s.replace(/\D/g, "").padStart(6, "0");
+      return code.startsWith("6") || code.startsWith("9") ? `${code}.SS` : `${code}.SZ`;
+    }
+    case "hk": {
+      // HK stocks: strip leading zeros, append .HK
+      // Yahoo uses e.g. 0700.HK (4 digits) not 00700.HK
+      const num = parseInt(s.replace(/\D/g, ""), 10);
+      if (isNaN(num)) return `${s}.HK`;
+      return `${num.toString().padStart(4, "0")}.HK`;
+    }
+    case "us":
+    default:
+      // US stocks: just the ticker
+      return s;
   }
-  return s;
 }
 
 export function calcProfitLoss(holding: FundHolding) {
