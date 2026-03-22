@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
-import { fetchFundInfo, fetchStockInfo, normalizeStockSymbol } from "@/lib/fund-api";
+import { fetchFundInfo, fetchStockInfo, fetchFundHoldings, normalizeStockSymbol } from "@/lib/fund-api";
 import { FundHolding, AssetType } from "@/types/fund";
 import { toast } from "sonner";
 
