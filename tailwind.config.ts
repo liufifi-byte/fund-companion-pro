@@ -47,6 +47,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        fund: {
+          rise: "hsl(var(--fund-rise))",
+          fall: "hsl(var(--fund-fall))",
+          "rise-bg": "hsl(var(--fund-rise-bg))",
+          "fall-bg": "hsl(var(--fund-fall-bg))",
+          neutral: "hsl(var(--fund-neutral))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
