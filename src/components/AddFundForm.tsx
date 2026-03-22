@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2 } from "lucide-react";
-import { fetchFundInfo, fetchStockInfo, normalizeStockSymbol } from "@/lib/fund-api";
+import { fetchFundInfo, fetchStockInfo, fetchFundHoldings, normalizeStockSymbol } from "@/lib/fund-api";
 import { FundHolding, AssetType } from "@/types/fund";
 import { toast } from "sonner";
 
@@ -49,7 +49,10 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
     setLoading(true);
 
     if (isFund) {
-      const info = await fetchFundInfo(trimmedCode);
+      const [info, topHoldings] = await Promise.all([
+        fetchFundInfo(trimmedCode),
+        fetchFundHoldings(trimmedCode),
+      ]);
       setLoading(false);
       if (!info) {
         toast.error("未找到该基金，请检查代码");
@@ -65,6 +68,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         currentNav: info.estimatedNav,
         dayChangePercent: info.changePercent,
         updatedAt: info.updateTime,
+        topHoldings,
       };
       onAdd(holding);
       toast.success(`已添加基金 ${info.name}`);

@@ -1,4 +1,4 @@
-import { FundHolding } from "@/types/fund";
+import { FundHolding, FundTopHolding } from "@/types/fund";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FundData {
@@ -64,6 +64,19 @@ export async function fetchFundInfo(code: string): Promise<{
   }
 }
 
+/** Fetch fund top holdings via edge function */
+export async function fetchFundHoldings(fundCode: string): Promise<FundTopHolding[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke("fund-holdings", {
+      body: { fundCode },
+    });
+    if (error || !data) return [];
+    return data.holdings || [];
+  } catch {
+    return [];
+  }
+}
+
 /** Fetch stock/ETF info via Yahoo Finance (proxied through edge function) */
 export async function fetchStockInfo(symbol: string): Promise<{
   name: string;
@@ -94,25 +107,20 @@ export async function fetchStockInfo(symbol: string): Promise<{
 /** Convert stock symbol input based on selected market */
 export function normalizeStockSymbol(input: string, market: string): string {
   const s = input.trim().toUpperCase();
-  // Already has exchange suffix → use as-is
   if (s.includes(".")) return s;
 
   switch (market) {
     case "cn_stock": {
-      // A-share: 6-digit code, 6/9→Shanghai, 0/3→Shenzhen
       const code = s.replace(/\D/g, "").padStart(6, "0");
       return code.startsWith("6") || code.startsWith("9") ? `${code}.SS` : `${code}.SZ`;
     }
     case "hk": {
-      // HK stocks: strip leading zeros, append .HK
-      // Yahoo uses e.g. 0700.HK (4 digits) not 00700.HK
       const num = parseInt(s.replace(/\D/g, ""), 10);
       if (isNaN(num)) return `${s}.HK`;
       return `${num.toString().padStart(4, "0")}.HK`;
     }
     case "us":
     default:
-      // US stocks: just the ticker
       return s;
   }
 }
@@ -123,4 +131,14 @@ export function calcProfitLoss(holding: FundHolding) {
   const profit = currentValue - holding.buyAmount;
   const profitPercent = (profit / holding.buyAmount) * 100;
   return { profit, profitPercent, currentValue, shares };
+}
+
+/** Calculate daily P&L from dayChangePercent and current value */
+export function calcDailyPL(holding: FundHolding) {
+  const { currentValue } = calcProfitLoss(holding);
+  // dailyPL = currentValue - previousValue
+  // previousValue = currentValue / (1 + dayChangePercent/100)
+  const dayChange = holding.dayChangePercent / 100;
+  const dailyPL = currentValue * dayChange / (1 + dayChange);
+  return dailyPL;
 }
