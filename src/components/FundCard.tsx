@@ -1,21 +1,44 @@
+import { useState } from "react";
 import { FundHolding } from "@/types/fund";
-import { calcProfitLoss } from "@/lib/fund-api";
-import { Trash2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { calcProfitLoss, calcDailyPL } from "@/lib/fund-api";
+import { Trash2, TrendingUp, TrendingDown, Minus, Pencil, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface FundCardProps {
   holding: FundHolding;
   onRemove: (id: string) => void;
+  onUpdateAmount: (id: string, newAmount: number) => void;
   index: number;
 }
 
-export default function FundCard({ holding, onRemove, index }: FundCardProps) {
+export default function FundCard({ holding, onRemove, onUpdateAmount, index }: FundCardProps) {
+  const [editing, setEditing] = useState(false);
+  const [editAmount, setEditAmount] = useState(holding.buyAmount.toString());
+
   const { profit, profitPercent, currentValue } = calcProfitLoss(holding);
+  const dailyPL = calcDailyPL(holding);
   const isUp = holding.dayChangePercent > 0;
   const isDown = holding.dayChangePercent < 0;
   const profitUp = profit > 0;
   const profitDown = profit < 0;
+  const dailyUp = dailyPL > 0;
+  const dailyDown = dailyPL < 0;
   const isStock = holding.type === "stock";
+  const isFund = holding.type === "fund";
   const currencySymbol = isStock && holding.currency !== "CNY" ? "$" : "¥";
+
+  const handleSaveAmount = () => {
+    const num = parseFloat(editAmount);
+    if (num > 0) {
+      onUpdateAmount(holding.id, num);
+      setEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditAmount(holding.buyAmount.toString());
+    setEditing(false);
+  };
 
   return (
     <div
@@ -62,6 +85,47 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
         </span>
       </div>
 
+      {/* Amount row with edit */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-muted-foreground">持仓金额:</span>
+        {editing ? (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={editAmount}
+              onChange={(e) => setEditAmount(e.target.value)}
+              className="h-6 w-24 text-xs tabular px-2"
+              min="0"
+              step="0.01"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveAmount();
+                if (e.key === "Escape") handleCancelEdit();
+              }}
+            />
+            <button onClick={handleSaveAmount} className="text-primary hover:text-primary/80 p-0.5 active:scale-95">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={handleCancelEdit} className="text-muted-foreground hover:text-foreground p-0.5 active:scale-95">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-medium tabular text-card-foreground">
+              {currencySymbol}{holding.buyAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
+            </span>
+            <button
+              onClick={() => { setEditAmount(holding.buyAmount.toString()); setEditing(true); }}
+              className="text-muted-foreground hover:text-foreground p-0.5 active:scale-95"
+              aria-label="修改金额"
+            >
+              <Pencil className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* P&L */}
       <div className="grid grid-cols-2 gap-3 pt-3 border-t">
         <div>
@@ -71,19 +135,35 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
           </div>
         </div>
         <div>
-          <div className="text-xs text-muted-foreground mb-0.5">预估盈亏</div>
+          <div className="text-xs text-muted-foreground mb-0.5">当日盈亏</div>
           <div
             className={`text-sm font-semibold tabular ${
-              profitUp ? "fund-rise" : profitDown ? "fund-fall" : "text-muted-foreground"
+              dailyUp ? "fund-rise" : dailyDown ? "fund-fall" : "text-muted-foreground"
             }`}
           >
-            {profitUp ? "+" : ""}{profit.toFixed(2)}
-            <span className="text-xs font-normal ml-1">
-              ({profitUp ? "+" : ""}{profitPercent.toFixed(2)}%)
-            </span>
+            {dailyUp ? "+" : ""}{dailyPL.toFixed(2)}
           </div>
         </div>
       </div>
+
+      {/* Fund top holdings */}
+      {isFund && holding.topHoldings && holding.topHoldings.length > 0 && (
+        <div className="mt-3 pt-3 border-t">
+          <div className="text-xs text-muted-foreground mb-2">前五持仓</div>
+          <div className="space-y-1">
+            {holding.topHoldings.map((th, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="text-card-foreground truncate max-w-[60%]">
+                  {th.name}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground tabular">{th.percent.toFixed(2)}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="text-[10px] text-muted-foreground mt-2 text-right tabular">
         更新于 {holding.updatedAt}

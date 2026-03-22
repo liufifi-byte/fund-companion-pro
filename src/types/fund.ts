@@ -1,5 +1,12 @@
 export type AssetType = "fund" | "stock";
 
+export interface FundTopHolding {
+  name: string;
+  code: string;
+  percent: number;
+  changePercent: number;
+}
+
 export interface FundHolding {
   id: string;
   code: string;
@@ -11,4 +18,5 @@ export interface FundHolding {
   dayChangePercent: number;
   updatedAt: string;
   currency?: string;
+  topHoldings?: FundTopHolding[];
 }

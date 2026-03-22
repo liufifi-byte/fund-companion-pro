@@ -3,7 +3,7 @@ import { FundHolding } from "@/types/fund";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
 import PortfolioSummary from "@/components/PortfolioSummary";
-import { fetchFundInfo, fetchStockInfo } from "@/lib/fund-api";
+import { fetchFundInfo, fetchStockInfo, fetchFundHoldings } from "@/lib/fund-api";
 import { RefreshCw, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -39,6 +39,19 @@ export default function Index() {
     setHoldings((prev) => prev.filter((h) => h.id !== id));
   };
 
+  const updateAmount = (id: string, newAmount: number) => {
+    setHoldings((prev) =>
+      prev.map((h) => {
+        if (h.id !== id) return h;
+        // Recalculate buyNav to keep shares ratio consistent with new amount
+        // shares = buyAmount / buyNav, keep currentNav the same
+        // New approach: just update buyAmount, buyNav stays same
+        return { ...h, buyAmount: newAmount };
+      })
+    );
+    toast.success("金额已更新");
+  };
+
   const refreshAll = async () => {
     if (holdings.length === 0) return;
     setRefreshing(true);
@@ -54,13 +67,17 @@ export default function Index() {
             updatedAt: info.updateTime,
           };
         } else {
-          const info = await fetchFundInfo(h.code);
+          const [info, topHoldings] = await Promise.all([
+            fetchFundInfo(h.code),
+            fetchFundHoldings(h.code),
+          ]);
           if (!info) return h;
           return {
             ...h,
             currentNav: info.estimatedNav,
             dayChangePercent: info.changePercent,
             updatedAt: info.updateTime,
+            topHoldings: topHoldings.length > 0 ? topHoldings : h.topHoldings,
           };
         }
       })
@@ -117,7 +134,7 @@ export default function Index() {
         {holdings.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {holdings.map((h, i) => (
-              <FundCard key={h.id} holding={h} onRemove={removeHolding} index={i} />
+              <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdateAmount={updateAmount} index={i} />
             ))}
           </div>
         ) : (
