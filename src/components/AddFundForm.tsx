@@ -49,7 +49,10 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
     setLoading(true);
 
     if (isFund) {
-      const info = await fetchFundInfo(trimmedCode);
+      const [info, topHoldings] = await Promise.all([
+        fetchFundInfo(trimmedCode),
+        fetchFundHoldings(trimmedCode),
+      ]);
       setLoading(false);
       if (!info) {
         toast.error("未找到该基金，请检查代码");
@@ -65,6 +68,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         currentNav: info.estimatedNav,
         dayChangePercent: info.changePercent,
         updatedAt: info.updateTime,
+        topHoldings,
       };
       onAdd(holding);
       toast.success(`已添加基金 ${info.name}`);
