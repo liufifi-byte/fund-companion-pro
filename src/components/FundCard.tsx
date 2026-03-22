@@ -14,6 +14,8 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
   const isDown = holding.dayChangePercent < 0;
   const profitUp = profit > 0;
   const profitDown = profit < 0;
+  const isStock = holding.type === "stock";
+  const currencySymbol = isStock && holding.currency !== "CNY" ? "$" : "¥";
 
   return (
     <div
@@ -23,9 +25,16 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="min-w-0">
-          <h3 className="font-semibold text-card-foreground truncate text-sm">
-            {holding.name}
-          </h3>
+          <div className="flex items-center gap-1.5">
+            <h3 className="font-semibold text-card-foreground truncate text-sm">
+              {holding.name}
+            </h3>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+              isStock ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+            }`}>
+              {isStock ? "股票" : "基金"}
+            </span>
+          </div>
           <span className="text-xs text-muted-foreground tabular">{holding.code}</span>
         </div>
         <button
@@ -48,7 +57,8 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
           {isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%
         </span>
         <span className="text-xs text-muted-foreground">
-          估值 <span className="tabular">{holding.currentNav.toFixed(4)}</span>
+          {isStock ? "现价" : "估值"}{" "}
+          <span className="tabular">{holding.currentNav.toFixed(isStock ? 2 : 4)}</span>
         </span>
       </div>
 
@@ -57,7 +67,7 @@ export default function FundCard({ holding, onRemove, index }: FundCardProps) {
         <div>
           <div className="text-xs text-muted-foreground mb-0.5">持有市值</div>
           <div className="text-sm font-semibold tabular text-card-foreground">
-            ¥{currentValue.toFixed(2)}
+            {currencySymbol}{currentValue.toFixed(2)}
           </div>
         </div>
         <div>

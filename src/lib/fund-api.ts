@@ -1,4 +1,5 @@
 import { FundHolding } from "@/types/fund";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FundData {
   fundcode: string;
@@ -38,6 +39,7 @@ function fetchJsonp(url: string, callbackName: string): Promise<FundData> {
   });
 }
 
+/** Fetch A-share mutual fund info via Tiantian Fund JSONP */
 export async function fetchFundInfo(code: string): Promise<{
   name: string;
   nav: number;
@@ -60,6 +62,46 @@ export async function fetchFundInfo(code: string): Promise<{
   } catch {
     return null;
   }
+}
+
+/** Fetch stock/ETF info via Yahoo Finance (proxied through edge function) */
+export async function fetchStockInfo(symbol: string): Promise<{
+  name: string;
+  price: number;
+  previousClose: number;
+  changePercent: number;
+  currency: string;
+  updateTime: string;
+} | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("yahoo-finance", {
+      body: { symbol },
+    });
+    if (error || !data || data.error) return null;
+    return {
+      name: data.name,
+      price: data.price,
+      previousClose: data.previousClose,
+      changePercent: data.changePercent,
+      currency: data.currency || "USD",
+      updateTime: new Date(data.marketTime * 1000).toLocaleString("zh-CN"),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Convert stock symbol input: A-share codes get .SS/.SZ suffix */
+export function normalizeStockSymbol(input: string): string {
+  const s = input.trim().toUpperCase();
+  // Already has suffix like AAPL, 0700.HK, 600519.SS
+  if (/[A-Z]/.test(s) && !/^\d{6}$/.test(s)) return s;
+  // Pure 6-digit number → A-share stock
+  if (/^\d{6}$/.test(s)) {
+    // 6/9 → Shanghai, 0/3 → Shenzhen
+    return s.startsWith("6") || s.startsWith("9") ? `${s}.SS` : `${s}.SZ`;
+  }
+  return s;
 }
 
 export function calcProfitLoss(holding: FundHolding) {

@@ -3,7 +3,7 @@ import { FundHolding } from "@/types/fund";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
 import PortfolioSummary from "@/components/PortfolioSummary";
-import { fetchFundInfo } from "@/lib/fund-api";
+import { fetchFundInfo, fetchStockInfo } from "@/lib/fund-api";
 import { RefreshCw, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -44,19 +44,30 @@ export default function Index() {
     setRefreshing(true);
     const updated = await Promise.all(
       holdings.map(async (h) => {
-        const info = await fetchFundInfo(h.code);
-        if (!info) return h;
-        return {
-          ...h,
-          currentNav: info.estimatedNav,
-          dayChangePercent: info.changePercent,
-          updatedAt: info.updateTime,
-        };
+        if (h.type === "stock") {
+          const info = await fetchStockInfo(h.code);
+          if (!info) return h;
+          return {
+            ...h,
+            currentNav: info.price,
+            dayChangePercent: info.changePercent,
+            updatedAt: info.updateTime,
+          };
+        } else {
+          const info = await fetchFundInfo(h.code);
+          if (!info) return h;
+          return {
+            ...h,
+            currentNav: info.estimatedNav,
+            dayChangePercent: info.changePercent,
+            updatedAt: info.updateTime,
+          };
+        }
       })
     );
     setHoldings(updated);
     setRefreshing(false);
-    toast.success("已刷新全部基金数据");
+    toast.success("已刷新全部数据");
   };
 
   return (
@@ -68,8 +79,8 @@ export default function Index() {
             <BarChart3 className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">基金助手</h1>
-            <p className="text-xs text-muted-foreground">实时跟踪基金涨跌与盈亏</p>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">投资助手</h1>
+            <p className="text-xs text-muted-foreground">实时跟踪基金与股票涨跌盈亏</p>
           </div>
         </div>
 
@@ -113,7 +124,7 @@ export default function Index() {
           <div className="text-center py-16 fade-in-up" style={{ animationDelay: "200ms" }}>
             <BarChart3 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
-              输入基金代码和买入金额，开始跟踪
+              选择基金或股票，输入代码和买入金额开始跟踪
             </p>
           </div>
         )}
