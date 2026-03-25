@@ -3,12 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import SplitSparkline from "@/components/SplitSparkline";
-
-interface HistoryPoint {
-  t: number;
-  c: number;
-}
+import CandlestickChart, { type OHLCPoint } from "@/components/CandlestickChart";
 
 interface MarketIndex {
   symbol: string;
@@ -17,7 +12,7 @@ interface MarketIndex {
   previousClose: number | null;
   change: number | null;
   changePercent: number | null;
-  history: HistoryPoint[];
+  ohlc: OHLCPoint[];
   loading: boolean;
 }
 
@@ -45,12 +40,13 @@ export default function Market() {
       previousClose: null,
       change: null,
       changePercent: null,
-      history: [],
+      ohlc: [],
       loading: true,
     }))
   );
   const [refreshing, setRefreshing] = useState(false);
   const [range, setRange] = useState<string>("1mo");
+
   const fetchAll = useCallback(async () => {
     setRefreshing(true);
     const results = await Promise.all(
@@ -60,7 +56,7 @@ export default function Market() {
             body: { symbol: idx.symbol, range },
           });
           if (error || !data || data.error) {
-            return { ...idx, price: null, previousClose: null, change: null, changePercent: null, history: [], loading: false };
+            return { ...idx, price: null, previousClose: null, change: null, changePercent: null, ohlc: [], loading: false };
           }
           return {
             ...idx,
@@ -68,11 +64,11 @@ export default function Market() {
             previousClose: data.previousClose ?? data.price,
             change: data.change,
             changePercent: data.changePercent,
-            history: (data.history || []) as HistoryPoint[],
+            ohlc: (data.ohlc || []) as OHLCPoint[],
             loading: false,
           };
         } catch {
-          return { ...idx, price: null, previousClose: null, change: null, changePercent: null, history: [], loading: false };
+          return { ...idx, price: null, previousClose: null, change: null, changePercent: null, ohlc: [], loading: false };
         }
       })
     );
@@ -100,6 +96,8 @@ export default function Market() {
     const sign = pct >= 0 ? "+" : "";
     return `${sign}${pct.toFixed(2)}%`;
   };
+
+  const chartHeight = typeof window !== "undefined" && window.innerWidth < 640 ? 180 : 220;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -166,14 +164,13 @@ export default function Market() {
                     )}
                   </div>
 
-                  {/* Sparkline chart */}
                   {idx.loading ? (
-                    <div className="h-16 w-full animate-pulse rounded bg-muted" />
-                  ) : idx.history.length > 1 && idx.previousClose !== null ? (
-                    <SplitSparkline
-                      data={idx.history}
+                    <div className="h-[180px] sm:h-[220px] w-full animate-pulse rounded bg-muted" />
+                  ) : idx.ohlc.length > 1 ? (
+                    <CandlestickChart
+                      data={idx.ohlc}
                       previousClose={idx.previousClose}
-                      height={64}
+                      height={chartHeight}
                     />
                   ) : null}
                 </CardContent>
