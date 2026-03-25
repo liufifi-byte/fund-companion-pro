@@ -89,7 +89,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
 
     chartRef.current = chart;
 
-    const candleSeries = chart.addCandlestickSeries({
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: "#E84040",
       downColor: "#2EAA5E",
       borderUpColor: "#E84040",
@@ -102,7 +102,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
     candleRef.current = candleSeries;
 
     // MA5
-    const ma5Series = chart.addLineSeries({
+    const ma5Series = chart.addSeries(LineSeries, {
       color: "#F5A623",
       lineWidth: 1,
       priceLineVisible: false,
@@ -114,7 +114,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
     ma5Ref.current = ma5Series;
 
     // MA10
-    const ma10Series = chart.addLineSeries({
+    const ma10Series = chart.addSeries(LineSeries, {
       color: "#4A90D9",
       lineWidth: 1,
       priceLineVisible: false,
