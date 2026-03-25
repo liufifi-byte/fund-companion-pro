@@ -3,12 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  YAxis,
-} from "recharts";
+import SplitSparkline from "@/components/SplitSparkline";
 
 interface HistoryPoint {
   t: number;
@@ -19,6 +14,7 @@ interface MarketIndex {
   symbol: string;
   label: string;
   price: number | null;
+  previousClose: number | null;
   change: number | null;
   changePercent: number | null;
   history: HistoryPoint[];
@@ -46,6 +42,7 @@ export default function Market() {
     INDICES.map((i) => ({
       ...i,
       price: null,
+      previousClose: null,
       change: null,
       changePercent: null,
       history: [],
@@ -63,18 +60,19 @@ export default function Market() {
             body: { symbol: idx.symbol, range },
           });
           if (error || !data || data.error) {
-            return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
+            return { ...idx, price: null, previousClose: null, change: null, changePercent: null, history: [], loading: false };
           }
           return {
             ...idx,
             price: data.price,
+            previousClose: data.previousClose ?? data.price,
             change: data.change,
             changePercent: data.changePercent,
             history: (data.history || []) as HistoryPoint[],
             loading: false,
           };
         } catch {
-          return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
+          return { ...idx, price: null, previousClose: null, change: null, changePercent: null, history: [], loading: false };
         }
       })
     );
@@ -137,11 +135,6 @@ export default function Market() {
         <div className="grid gap-3">
           {indices.map((idx) => {
             const isUp = (idx.change ?? 0) >= 0;
-            const chartColor = idx.change === null
-              ? "hsl(var(--muted-foreground))"
-              : isUp
-              ? "hsl(var(--fund-rise))"
-              : "hsl(var(--fund-fall))";
 
             return (
               <Card key={idx.symbol} className="overflow-hidden">
@@ -176,29 +169,12 @@ export default function Market() {
                   {/* Sparkline chart */}
                   {idx.loading ? (
                     <div className="h-16 w-full animate-pulse rounded bg-muted" />
-                  ) : idx.history.length > 1 ? (
-                    <div className="h-16 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={idx.history} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id={`grad-${idx.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={chartColor} stopOpacity={0.25} />
-                              <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
-                            </linearGradient>
-                          </defs>
-                          <YAxis domain={["dataMin", "dataMax"]} hide />
-                          <Area
-                            type="monotone"
-                            dataKey="c"
-                            stroke={chartColor}
-                            strokeWidth={1.5}
-                            fill={`url(#grad-${idx.symbol})`}
-                            dot={false}
-                            isAnimationActive={false}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
+                  ) : idx.history.length > 1 && idx.previousClose !== null ? (
+                    <SplitSparkline
+                      data={idx.history}
+                      previousClose={idx.previousClose}
+                      height={64}
+                    />
                   ) : null}
                 </CardContent>
               </Card>
