@@ -14,6 +14,7 @@ interface MarketIndex {
   symbol: string;
   label: string;
   price: number | null;
+  previousClose: number | null;
   change: number | null;
   changePercent: number | null;
   history: HistoryPoint[];
