@@ -22,10 +22,12 @@ const MARKET_OPTIONS: { value: Market; label: string; placeholder: string }[] = 
 export default function AddFundForm({ onAdd }: AddFundFormProps) {
   const [code, setCode] = useState("");
   const [amount, setAmount] = useState("");
+  const [costPrice, setCostPrice] = useState("");
   const [market, setMarket] = useState<Market>("cn_fund");
   const [loading, setLoading] = useState(false);
 
   const isFund = market === "cn_fund";
+  const isStock = !isFund;
   const currentOption = MARKET_OPTIONS.find((m) => m.value === market)!;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +82,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         toast.error(`未找到该股票 (${symbol})，请检查代码`);
         return;
       }
+      const numCostPrice = parseFloat(costPrice);
       const holding: FundHolding = {
         id: `${symbol}-${Date.now()}`,
         code: symbol,
@@ -91,6 +94,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         dayChangePercent: info.changePercent,
         updatedAt: info.updateTime,
         currency: info.currency,
+        costPrice: numCostPrice > 0 ? numCostPrice : undefined,
       };
       onAdd(holding);
       toast.success(`已添加股票 ${info.name}`);
@@ -98,6 +102,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
 
     setCode("");
     setAmount("");
+    setCostPrice("");
   };
 
   return (
@@ -152,7 +157,23 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
             className="tabular h-10"
           />
         </div>
-        <Button type="submit" disabled={loading} className="h-10 px-5 shrink-0">
+        {isStock && (
+          <div className="w-24 shrink-0">
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              成本价 (选填)
+            </label>
+            <Input
+              type="number"
+              placeholder="0.00"
+              value={costPrice}
+              onChange={(e) => setCostPrice(e.target.value)}
+              min="0"
+              step="0.01"
+              className="tabular h-10"
+            />
+          </div>
+        )}
+        <Button type="submit" disabled={loading} className="h-10 px-5 shrink-0 self-end">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
           {loading ? "查询中" : "添加"}
         </Button>
