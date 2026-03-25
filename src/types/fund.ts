@@ -1,5 +1,11 @@
 export type AssetType = "fund" | "stock";
 
+export interface Purchase {
+  date: string;       // e.g. '2026-01-15'
+  amount: number;     // 买入本金
+  buyNav: number;     // 买入净值/价格
+}
+
 export interface FundTopHolding {
   name: string;
   code: string;
@@ -12,12 +18,14 @@ export interface FundHolding {
   code: string;
   name: string;
   type: AssetType;
-  buyAmount: number;
-  buyNav: number;
+  purchases: Purchase[];
   currentNav: number;
   dayChangePercent: number;
   updatedAt: string;
   currency?: string;
-  costPrice?: number;
   topHoldings?: FundTopHolding[];
+  // Legacy fields kept for migration
+  buyAmount?: number;
+  buyNav?: number;
+  costPrice?: number;
 }
