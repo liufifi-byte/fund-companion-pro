@@ -192,6 +192,30 @@ export default function Index() {
             </p>
           </div>
         )}
+
+        {/* Transaction-based positions */}
+        <div className="flex items-center justify-between mb-4 mt-8 fade-in-up">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            交易账本 · {positions.filter(p => p.quantity > 0).length} 只持仓
+          </h2>
+          <AddTransactionModal onAdd={addTransaction} />
+        </div>
+
+        {positions.filter(p => p.quantity > 0).length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {positions
+              .filter((p) => p.quantity > 0)
+              .map((p, i) => (
+                <PositionCard key={p.assetCode} position={p} onRemove={removePosition} index={i} />
+              ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 fade-in-up">
+            <p className="text-sm text-muted-foreground">
+              点击"记一笔"添加交易记录
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
