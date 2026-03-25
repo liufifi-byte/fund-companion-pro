@@ -4,6 +4,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import CandlestickChart, { type OHLCPoint } from "@/components/CandlestickChart";
+import MacroCockpit from "@/components/MacroCockpit";
 
 interface MarketIndex {
   symbol: string;
@@ -115,6 +116,8 @@ export default function Market() {
             刷新
           </Button>
         </div>
+
+        <MacroCockpit />
 
         <div className="flex items-center gap-1 mb-4">
           {RANGES.map((r) => (
