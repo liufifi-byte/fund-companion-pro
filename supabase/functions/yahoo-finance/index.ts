@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { symbol } = await req.json();
+    const { symbol, range: chartRange } = await req.json();
     if (!symbol || typeof symbol !== "string") {
       return new Response(
         JSON.stringify({ error: "Missing symbol parameter" }),
@@ -20,8 +20,9 @@ serve(async (req) => {
       );
     }
 
-    // Yahoo Finance v8 quote API
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+    const interval = chartRange === "1mo" ? "1d" : chartRange === "3mo" ? "1d" : "1d";
+    const reqRange = chartRange || "1d";
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${reqRange}`;
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
     });
@@ -49,6 +50,13 @@ serve(async (req) => {
     const change = price - prevClose;
     const changePercent = prevClose ? (change / prevClose) * 100 : 0;
 
+    // Extract historical close prices for chart
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    const timestamps = result.timestamp || [];
+    const history = timestamps
+      .map((t: number, i: number) => ({ t, c: closes[i] }))
+      .filter((d: { t: number; c: number | null }) => d.c !== null);
+
     return new Response(
       JSON.stringify({
         symbol: meta.symbol,
@@ -59,6 +67,7 @@ serve(async (req) => {
         change,
         changePercent,
         marketTime: meta.regularMarketTime,
+        history,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
