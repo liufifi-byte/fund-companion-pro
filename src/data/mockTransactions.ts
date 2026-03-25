@@ -1,0 +1,111 @@
+import { Transaction } from "@/types/transaction";
+
+export const mockTransactions: Transaction[] = [
+  // === 美股 CRWV (多次买卖) ===
+  {
+    id: "tx-001",
+    assetCode: "CRWV",
+    assetName: "CrowdStrike",
+    type: "BUY",
+    price: 52.30,
+    quantity: 100,
+    fee: 1.99,
+    date: "2025-01-15",
+  },
+  {
+    id: "tx-002",
+    assetCode: "CRWV",
+    assetName: "CrowdStrike",
+    type: "BUY",
+    price: 48.50,
+    quantity: 50,
+    fee: 1.99,
+    date: "2025-02-10",
+  },
+  {
+    id: "tx-003",
+    assetCode: "CRWV",
+    assetName: "CrowdStrike",
+    type: "SELL",
+    price: 55.00,
+    quantity: 30,
+    fee: 1.99,
+    date: "2025-03-05",
+  },
+
+  // === 场外基金 110011 (易方达中小盘) ===
+  {
+    id: "tx-004",
+    assetCode: "110011",
+    assetName: "易方达中小盘混合",
+    type: "BUY",
+    price: 5.2310,
+    quantity: 1000,
+    fee: 7.85,
+    date: "2024-11-20",
+  },
+  {
+    id: "tx-005",
+    assetCode: "110011",
+    assetName: "易方达中小盘混合",
+    type: "BUY",
+    price: 4.9800,
+    quantity: 2000,
+    fee: 14.94,
+    date: "2025-01-08",
+  },
+  {
+    id: "tx-006",
+    assetCode: "110011",
+    assetName: "易方达中小盘混合",
+    type: "SELL",
+    price: 5.4500,
+    quantity: 500,
+    fee: 6.81,
+    date: "2025-03-15",
+  },
+
+  // === Web3 BTC (比特币) ===
+  {
+    id: "tx-007",
+    assetCode: "BTC-USD",
+    assetName: "比特币",
+    type: "BUY",
+    price: 42150.00,
+    quantity: 0.5,
+    fee: 25.00,
+    date: "2024-10-05",
+  },
+  {
+    id: "tx-008",
+    assetCode: "BTC-USD",
+    assetName: "比特币",
+    type: "BUY",
+    price: 38900.00,
+    quantity: 0.3,
+    fee: 15.00,
+    date: "2024-12-20",
+  },
+  {
+    id: "tx-009",
+    assetCode: "BTC-USD",
+    assetName: "比特币",
+    type: "SELL",
+    price: 67500.00,
+    quantity: 0.1,
+    fee: 20.00,
+    date: "2025-03-10",
+  },
+
+  // === 美股 AAPL ===
+  {
+    id: "tx-010",
+    assetCode: "AAPL",
+    assetName: "Apple Inc.",
+    type: "BUY",
+    price: 178.50,
+    quantity: 20,
+    fee: 0.99,
+    date: "2025-02-01",
+  },
+];
