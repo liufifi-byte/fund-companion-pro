@@ -1,14 +1,20 @@
 import { useState, useEffect } from "react";
 import { FundHolding } from "@/types/fund";
+import { Transaction, CurrentPrice } from "@/types/transaction";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
 import PortfolioSummary from "@/components/PortfolioSummary";
+import AddTransactionModal from "@/components/AddTransactionModal";
+import PositionCard from "@/components/PositionCard";
+import { usePortfolioCalculation } from "@/hooks/usePortfolioCalculation";
 import { fetchFundInfo, fetchStockInfo, fetchFundHoldings } from "@/lib/fund-api";
 import { RefreshCw, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { mockTransactions } from "@/data/mockTransactions";
 
 const STORAGE_KEY = "fund-holdings";
+const TX_STORAGE_KEY = "transaction-ledger";
 
 function loadHoldings(): FundHolding[] {
   try {
