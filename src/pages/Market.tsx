@@ -58,7 +58,7 @@ export default function Market() {
       INDICES.map(async (idx) => {
         try {
           const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-            body: { symbol: idx.symbol, range: "1mo" },
+            body: { symbol: idx.symbol, range },
           });
           if (error || !data || data.error) {
             return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
