@@ -34,6 +34,7 @@ const INDICES = [
 ];
 
 const RANGES = [
+  { value: "1d", label: "1天" },
   { value: "5d", label: "1周" },
   { value: "1mo", label: "1月" },
   { value: "3mo", label: "3月" },
