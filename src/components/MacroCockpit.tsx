@@ -56,7 +56,7 @@ const MACRO_DATA: MacroIndicator[] = [
     changePercent: 3.23,
     expected: 3.1,
     description: "美国消费者物价指数(CPI)年率，衡量通胀水平，是美联储货币政策的核心参考。",
-    getTransmission: (change, value) => {
+    getTransmission: (_change: number, value: number) => {
       const expected = 3.1;
       if (value > expected)
         return `CPI实际值(${value}%)高于预期(${expected}%)。通胀超预期意味着美联储降息预期推迟，美债收益率和美元可能走强，利空风险资产。`;
