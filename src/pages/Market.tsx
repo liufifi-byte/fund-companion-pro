@@ -135,11 +135,6 @@ export default function Market() {
         <div className="grid gap-3">
           {indices.map((idx) => {
             const isUp = (idx.change ?? 0) >= 0;
-            const chartColor = idx.change === null
-              ? "hsl(var(--muted-foreground))"
-              : isUp
-              ? "hsl(var(--fund-rise))"
-              : "hsl(var(--fund-fall))";
 
             return (
               <Card key={idx.symbol} className="overflow-hidden">
