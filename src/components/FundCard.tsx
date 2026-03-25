@@ -17,7 +17,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
   const isDown = holding.dayChangePercent < 0;
   const isStock = holding.type === "stock";
   const isFund = holding.type === "fund";
-  const currencySymbol = isStock && holding.currency !== "CNY" ? "$" : "¥";
+  const currencySymbol = holding.currency === "USD" ? "$" : holding.currency === "HKD" ? "HK$" : "¥";
   const navDecimals = isFund ? 4 : 2;
 
   const pnlUp = calc.holdingPnlAmount > 0;
