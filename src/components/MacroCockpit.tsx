@@ -29,7 +29,7 @@ const MACRO_DATA: MacroIndicator[] = [
     change: 0.05,
     changePercent: 1.15,
     description: "美国10年期国债收益率，是全球资产定价的基准利率，被称为"无风险利率之锚"。",
-    getTransmission: (change) =>
+    getTransmission: (change: number) =>
       change >= 0
         ? "当前美债收益率上行。资金机会成本增加，通常会压制高估值的科技股(纳指)和加密货币(Web3资产)，利空风险资产。"
         : "当前美债收益率下行。资金机会成本降低，有利于成长股和科技股估值修复，利好风险资产。",
@@ -42,7 +42,7 @@ const MACRO_DATA: MacroIndicator[] = [
     change: -0.32,
     changePercent: -0.31,
     description: "美元指数衡量美元对一篮子主要货币的汇率强弱，是全球流动性的风向标。",
-    getTransmission: (change) =>
+    getTransmission: (change: number) =>
       change >= 0
         ? "美元走强。全球美元流动性收紧，新兴市场资产和大宗商品(黄金、原油)承压，人民币资产面临汇率逆风。"
         : "美元走弱。全球美元流动性宽松，利好新兴市场资产和以美元计价的大宗商品(黄金、原油)。",
@@ -73,7 +73,7 @@ const MACRO_DATA: MacroIndicator[] = [
     change: 4.8,
     changePercent: 17.33,
     description: "VIX指数衡量市场对标普500未来30天波动率的预期，又称"恐慌指数"。",
-    getTransmission: (_change, value) => {
+    getTransmission: (_change: number, value: number) => {
       if (value > 30)
         return "市场处于极度恐慌状态，可能出现非理性抛售，关注左侧建仓机会。历史数据显示VIX>30后6个月内市场大概率反弹。";
       if (value > 20)
@@ -89,7 +89,7 @@ const MACRO_DATA: MacroIndicator[] = [
     change: -185,
     changePercent: -0.99,
     description: "纳斯达克100期货指数，反映美国科技股的盘前/盘后走势及市场预期。",
-    getTransmission: (change) =>
+    getTransmission: (change: number) =>
       change >= 0
         ? "纳指期货上涨。市场风险偏好回升，科技股领涨，通常带动全球成长股和加密资产同步走强。"
         : "纳指期货下跌。科技股承压可能源于利率上行或盈利预期下调，关注是否传导至亚太科技股和Web3板块。",
@@ -102,7 +102,7 @@ const MACRO_DATA: MacroIndicator[] = [
     change: 1250,
     changePercent: 1.89,
     description: "比特币价格，加密货币市场的风向标，与全球流动性和风险偏好高度相关。",
-    getTransmission: (change) =>
+    getTransmission: (change: number) =>
       change >= 0
         ? "比特币上涨。加密市场风险偏好回升，通常伴随美元走弱或流动性宽松预期，关注山寨币联动机会。"
         : "比特币下跌。可能受美元走强、监管政策或宏观紧缩预期影响，需警惕加密市场连锁清算风险。",
