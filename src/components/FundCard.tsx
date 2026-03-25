@@ -33,22 +33,18 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-medium text-card-foreground truncate" style={{ fontSize: 15 }}>{holding.name}</span>
-          <span className="text-muted-foreground tabular" style={{ fontSize: 12 }}>{holding.code}</span>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-card-foreground truncate text-[15px]">{holding.name}</span>
+            <span className="text-muted-foreground tabular text-[12px]">{holding.code}</span>
+          </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-            isStock ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+            isStock ? "bg-accent text-accent-foreground" : "bg-secondary text-secondary-foreground"
           }`}>
             {isStock ? "股票" : "基金"}
-          </span>
-          <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-            isUp ? "fund-rise fund-rise-bg" : isDown ? "fund-fall fund-fall-bg" : "text-muted-foreground bg-muted"
-          }`}>
-            {isUp ? <TrendingUp className="w-3 h-3" /> : isDown ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-            {isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%
           </span>
           <button onClick={() => onRemove(holding.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded active:scale-95" aria-label="删除">
             <Trash2 className="w-3.5 h-3.5" />
@@ -56,60 +52,59 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         </div>
       </div>
 
+      {/* Market value + cumulative PnL — hero area */}
+      <div className="px-4 pb-3">
+        <div className="text-[22px] font-bold tabular text-card-foreground leading-tight">
+          {currencySymbol}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
+        </div>
+        <div className="flex items-center gap-3 mt-1">
+          <span className={`text-[13px] font-medium tabular ${pnlUp ? "fund-rise" : pnlDown ? "fund-fall" : "text-muted-foreground"}`}>
+            {pnlUp ? "+" : ""}{currencySymbol}{calc.holdingPnlAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })} ({pnlUp ? "+" : ""}{(calc.holdingPnlPercent * 100).toFixed(2)}%)
+          </span>
+          <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${
+            isUp ? "fund-rise fund-rise-bg" : isDown ? "fund-fall fund-fall-bg" : "text-muted-foreground bg-muted"
+          }`}>
+            {isUp ? <TrendingUp className="w-3 h-3" /> : isDown ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+            今日 {isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%
+          </span>
+        </div>
+      </div>
+
       <div className="border-t mx-4" />
 
       {/* Detail grid 2x2 */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 px-4 py-3">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 py-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground" style={{ fontSize: 12 }}>买入本金</span>
-          <span className="font-medium tabular text-card-foreground" style={{ fontSize: 12 }}>
+          <span className="text-muted-foreground text-[11px]">买入本金</span>
+          <span className="font-medium tabular text-card-foreground text-[11px]">
             {currencySymbol}{calc.totalCost.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
             <EditPurchasesModal holding={holding} onUpdate={onUpdatePurchases} />
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground" style={{ fontSize: 12 }}>持有{isFund ? "份额" : "股数"}</span>
-          <span className="font-medium tabular text-card-foreground" style={{ fontSize: 12 }}>
+          <span className="text-muted-foreground text-[11px]">持有{isFund ? "份额" : "股数"}</span>
+          <span className="font-medium tabular text-card-foreground text-[11px]">
             {calc.totalShares.toLocaleString("zh-CN", { minimumFractionDigits: 2 })} {isFund ? "份" : "股"}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground" style={{ fontSize: 12 }}>平均成本</span>
-          <span className="font-medium tabular text-card-foreground" style={{ fontSize: 12 }}>
+          <span className="text-muted-foreground text-[11px]">平均成本</span>
+          <span className="font-medium tabular text-card-foreground text-[11px]">
             {currencySymbol}{calc.avgCost.toFixed(navDecimals)}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-muted-foreground" style={{ fontSize: 12 }}>{isFund ? "当前净值" : "当前价格"}</span>
-          <span className="font-medium tabular text-card-foreground" style={{ fontSize: 12 }}>
+          <span className="text-muted-foreground text-[11px]">{isFund ? "当前净值" : "当前价格"}</span>
+          <span className="font-medium tabular text-card-foreground text-[11px]">
             {currencySymbol}{holding.currentNav.toFixed(navDecimals)}
           </span>
         </div>
       </div>
 
-      {/* Core highlight blocks */}
-      <div className="grid grid-cols-2 gap-2 px-4 pb-3">
-        <div className="bg-muted rounded-lg px-3 py-2.5">
-          <div className="text-muted-foreground mb-1" style={{ fontSize: 11 }}>持有市值</div>
-          <div className="font-semibold tabular text-card-foreground" style={{ fontSize: 18 }}>
-            {currencySymbol}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-        <div className="bg-muted rounded-lg px-3 py-2.5">
-          <div className="text-muted-foreground mb-1" style={{ fontSize: 11 }}>累计收益</div>
-          <div className={`font-semibold tabular ${pnlUp ? "fund-rise" : pnlDown ? "fund-fall" : "text-muted-foreground"}`} style={{ fontSize: 18 }}>
-            {pnlUp ? "+" : ""}{currencySymbol}{calc.holdingPnlAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
-          </div>
-          <div className={`tabular ${pnlUp ? "fund-rise" : pnlDown ? "fund-fall" : "text-muted-foreground"}`} style={{ fontSize: 12 }}>
-            {pnlUp ? "+" : ""}{(calc.holdingPnlPercent * 100).toFixed(2)}%
-          </div>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between px-4 pb-3 text-muted-foreground" style={{ fontSize: 12 }}>
+      {/* Footer: today PnL merged + update time */}
+      <div className="flex items-center justify-between px-4 pb-3 text-muted-foreground text-[11px]">
         <span className={`tabular ${todayUp ? "fund-rise" : todayDown ? "fund-fall" : ""}`}>
-          当日盈亏: {todayUp ? "+" : ""}{currencySymbol}{calc.todayPnlAmount.toFixed(2)}
+          当日盈亏: {todayUp ? "+" : ""}{currencySymbol}{calc.todayPnlAmount.toFixed(2)} ({isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%)
         </span>
         <span className="tabular">更新于 {holding.updatedAt}</span>
       </div>
@@ -120,15 +115,15 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
           <div className="border-t mx-4" />
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground w-full justify-center py-2 transition-colors"
+            className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground w-full justify-center py-2 transition-colors"
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             {expanded ? "收起持仓" : "前五持仓"}
           </button>
           {expanded && (
-            <div className="px-4 pb-3 space-y-1">
+            <div className="px-4 pb-3 space-y-0.5">
               {holding.topHoldings.map((th, i) => (
-                <div key={i} className="flex items-center justify-between text-xs">
+                <div key={i} className="flex items-center justify-between text-[11px]">
                   <span className="text-card-foreground truncate max-w-[60%]">{th.name}</span>
                   <span className={`tabular font-medium ${th.changePercent > 0 ? "fund-rise" : th.changePercent < 0 ? "fund-fall" : "text-muted-foreground"}`}>
                     {th.changePercent > 0 ? "+" : ""}{th.changePercent.toFixed(2)}%
