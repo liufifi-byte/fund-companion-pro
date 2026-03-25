@@ -33,6 +33,12 @@ const INDICES = [
   { symbol: "^IXIC", label: "纳斯达克指数" },
 ];
 
+const RANGES = [
+  { value: "5d", label: "1周" },
+  { value: "1mo", label: "1月" },
+  { value: "3mo", label: "3月" },
+] as const;
+
 export default function Market() {
   const [indices, setIndices] = useState<MarketIndex[]>(
     INDICES.map((i) => ({
