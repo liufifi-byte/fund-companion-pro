@@ -9,7 +9,7 @@ import { Purchase } from "@/types/fund";
 interface FundCardProps {
   holding: FundHolding;
   onRemove: (id: string) => void;
-  onUpdatePurchases: (id: string, purchases: Purchase[]) => void;
+  onUpdatePurchases: (id: string, purchases: Purchase[], realizedPnl?: number) => void;
   index: number;
 }
 
