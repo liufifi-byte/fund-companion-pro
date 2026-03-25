@@ -1,22 +1,16 @@
 import { useState, useEffect } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
-import { Transaction, CurrentPrice } from "@/types/transaction";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
 import FundListItem from "@/components/FundListItem";
 import PortfolioSummary from "@/components/PortfolioSummary";
-import AddTransactionModal from "@/components/AddTransactionModal";
-import PositionCard from "@/components/PositionCard";
-import { usePortfolioCalculation } from "@/hooks/usePortfolioCalculation";
 import { fetchFundInfo, fetchStockInfo, fetchFundHoldings } from "@/lib/fund-api";
 import { RefreshCw, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { mockTransactions } from "@/data/mockTransactions";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const STORAGE_KEY = "fund-holdings";
-const TX_STORAGE_KEY = "transaction-ledger";
 
 function migrateHolding(h: any): FundHolding {
   if (h.purchases && h.purchases.length > 0) return h as FundHolding;
@@ -43,45 +37,18 @@ function saveHoldings(h: FundHolding[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
 }
 
-function loadTransactions(): Transaction[] {
-  try {
-    const raw = localStorage.getItem(TX_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-    localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(mockTransactions));
-    return mockTransactions;
-  } catch { return mockTransactions; }
-}
-
-function saveTransactions(txs: Transaction[]) {
-  localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(txs));
-}
-
-const MOCK_PRICES: Record<string, CurrentPrice> = {
-  CRWV: { code: "CRWV", price: 56.80, dayChangePercent: 1.25, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
-  "110011": { code: "110011", price: 5.38, dayChangePercent: -0.56, currency: "CNY", updatedAt: new Date().toLocaleString("zh-CN") },
-  "BTC-USD": { code: "BTC-USD", price: 87350.00, dayChangePercent: 2.10, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
-  AAPL: { code: "AAPL", price: 195.20, dayChangePercent: 0.85, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
-};
-
 export default function Index() {
   const [holdings, setHoldings] = useState<FundHolding[]>(loadHoldings);
-  const [transactions, setTransactions] = useState<Transaction[]>(loadTransactions);
-  const [currentPrices] = useState<Record<string, CurrentPrice>>(MOCK_PRICES);
   const [refreshing, setRefreshing] = useState(false);
   const isMobile = useIsMobile();
 
-  const positions = usePortfolioCalculation(transactions, currentPrices);
-
   useEffect(() => { saveHoldings(holdings); }, [holdings]);
-  useEffect(() => { saveTransactions(transactions); }, [transactions]);
 
   const addHolding = (h: FundHolding) => setHoldings((prev) => [h, ...prev]);
   const updatePurchases = (id: string, purchases: Purchase[]) => {
     setHoldings((prev) => prev.map((h) => h.id !== id ? h : { ...h, purchases }));
     toast.success("买入记录已更新");
   };
-  const addTransaction = (tx: Transaction) => setTransactions((prev) => [...prev, tx]);
-  const removePosition = (code: string) => setTransactions((prev) => prev.filter((tx) => tx.assetCode !== code));
   const removeHolding = (id: string) => setHoldings((prev) => prev.filter((h) => h.id !== id));
 
   const refreshAll = async () => {
@@ -163,24 +130,6 @@ export default function Index() {
           <div className="text-center py-12 fade-in-up">
             <BarChart3 className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
             <p className="text-xs text-muted-foreground">选择基金或股票，输入代码和买入金额开始跟踪</p>
-          </div>
-        )}
-
-        {/* Transaction-based positions */}
-        <div className="flex items-center justify-between mb-3 mt-8 fade-in-up">
-          <h2 className="text-xs font-medium text-muted-foreground">交易账本 · {positions.filter(p => p.quantity > 0).length} 只持仓</h2>
-          <AddTransactionModal onAdd={addTransaction} />
-        </div>
-
-        {positions.filter(p => p.quantity > 0).length > 0 ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {positions.filter((p) => p.quantity > 0).map((p, i) => (
-              <PositionCard key={p.assetCode} position={p} onRemove={removePosition} index={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6 fade-in-up">
-            <p className="text-xs text-muted-foreground">点击"记一笔"添加交易记录</p>
           </div>
         )}
       </div>

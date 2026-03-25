@@ -21,6 +21,19 @@ const MARKET_OPTIONS: { value: Market; label: string; placeholder: string }[] = 
 
 type UsCurrency = "USD" | "HKD";
 
+function getCurrencyForMarket(market: Market, usCurrency: UsCurrency): string {
+  if (market === "cn_fund" || market === "cn_stock") return "CNY";
+  if (market === "hk") return "HKD";
+  return usCurrency;
+}
+
+function getSymbol(market: Market, usCurrency: UsCurrency): string {
+  const c = getCurrencyForMarket(market, usCurrency);
+  if (c === "USD") return "$";
+  if (c === "HKD") return "HK$";
+  return "¥";
+}
+
 export default function AddFundForm({ onAdd }: AddFundFormProps) {
   const [code, setCode] = useState("");
   const [amount, setAmount] = useState("");
@@ -32,12 +45,8 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
 
   const isFund = market === "cn_fund";
   const currentOption = MARKET_OPTIONS.find((m) => m.value === market)!;
-
-  function getCurrency(): string {
-    if (market === "cn_fund" || market === "cn_stock") return "CNY";
-    if (market === "hk") return "HKD";
-    return usCurrency;
-  }
+  const sym = getSymbol(market, usCurrency);
+  const currencyLabel = getCurrencyForMarket(market, usCurrency);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +60,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
     if (!navValue || navValue <= 0) { toast.error(isFund ? "请输入买入净值" : "请输入买入价格"); return; }
 
     const dateStr = buyDate || new Date().toISOString().slice(0, 10);
+    const currency = getCurrencyForMarket(market, usCurrency);
     setLoading(true);
 
     if (isFund) {
@@ -70,7 +80,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         currentNav: info.estimatedNav,
         dayChangePercent: info.changePercent,
         updatedAt: info.updateTime,
-        currency: "CNY",
+        currency,
         topHoldings,
       };
       onAdd(holding);
@@ -90,7 +100,7 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
         currentNav: info.price,
         dayChangePercent: info.changePercent,
         updatedAt: info.updateTime,
-        currency: getCurrency(),
+        currency,
       };
       onAdd(holding);
       toast.success(`已添加股票 ${info.name}`);
@@ -134,13 +144,15 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
             className="tabular h-10"
           />
         </div>
-        <div className="w-24">
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">买入金额</label>
+        <div className="w-28">
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+            买入金额 <span className="text-muted-foreground/60">({currencyLabel})</span>
+          </label>
           <Input type="number" placeholder="10000" value={amount} onChange={(e) => setAmount(e.target.value)} min="0" step="0.01" className="tabular h-10" />
         </div>
-        <div className="w-24">
+        <div className="w-28">
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            {isFund ? "买入净值" : "买入价格"}
+            {isFund ? "买入净值" : "买入价格"} <span className="text-muted-foreground/60">({sym})</span>
             <span className="text-destructive ml-0.5">*</span>
           </label>
           <Input type="number" placeholder={isFund ? "1.3100" : "0.00"} value={buyNav} onChange={(e) => setBuyNav(e.target.value)} min="0" step="0.0001" className="tabular h-10" required />

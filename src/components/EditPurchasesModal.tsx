@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
+import { currencySymbol } from "@/lib/currency";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ export default function EditPurchasesModal({ holding, onUpdate }: Props) {
   const isFund = holding.type === "fund";
   const navLabel = isFund ? "买入净值" : "买入价格";
   const navDecimals = isFund ? 4 : 2;
+  const sym = currencySymbol(holding.currency);
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
@@ -74,9 +76,9 @@ export default function EditPurchasesModal({ holding, onUpdate }: Props) {
           {purchases.map((p, i) => (
             <div key={i} className="flex items-center gap-3 text-xs bg-muted/50 rounded-md px-3 py-2">
               <span className="text-muted-foreground w-20 shrink-0">{p.date}</span>
-              <span className="tabular flex-1">¥{p.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}</span>
+              <span className="tabular flex-1">{sym}{p.amount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}</span>
               <span className="tabular text-muted-foreground">{navLabel} {p.buyNav.toFixed(navDecimals)}</span>
-              <span className="tabular text-muted-foreground">{(p.amount / p.buyNav).toFixed(navDecimals)}份</span>
+              <span className="tabular text-muted-foreground">{(p.amount / p.buyNav).toFixed(navDecimals)}{isFund ? "份" : "股"}</span>
               <button onClick={() => removePurchase(i)} className="text-muted-foreground hover:text-destructive p-0.5">
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -92,11 +94,11 @@ export default function EditPurchasesModal({ holding, onUpdate }: Props) {
                 <Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} className="h-8 text-xs" />
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground">金额</label>
+                <label className="text-[10px] text-muted-foreground">金额 ({sym})</label>
                 <Input type="number" placeholder="10000" value={newAmount} onChange={e => setNewAmount(e.target.value)} className="h-8 text-xs tabular" min="0" step="0.01" />
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground">{navLabel}</label>
+                <label className="text-[10px] text-muted-foreground">{navLabel} ({sym})</label>
                 <Input type="number" placeholder="1.3100" value={newNav} onChange={e => setNewNav(e.target.value)} className="h-8 text-xs tabular" min="0" step="0.0001" />
               </div>
             </div>

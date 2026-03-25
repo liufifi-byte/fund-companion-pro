@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FundHolding } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
+import { currencySymbol } from "@/lib/currency";
 import { Trash2, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 import { Purchase } from "@/types/fund";
@@ -19,7 +20,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
   const isDown = holding.dayChangePercent < 0;
   const isStock = holding.type === "stock";
   const isFund = holding.type === "fund";
-  const currencySymbol = holding.currency === "USD" ? "$" : holding.currency === "HKD" ? "HK$" : "¥";
+  const sym = currencySymbol(holding.currency);
   const navDecimals = isFund ? 4 : 2;
 
   const pnlUp = calc.holdingPnlAmount > 0;
@@ -55,11 +56,11 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       {/* Market value + cumulative PnL — hero area */}
       <div className="px-4 pb-3">
         <div className="text-[22px] font-bold tabular text-card-foreground leading-tight">
-          {currencySymbol}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
+          {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
         </div>
         <div className="flex items-center gap-3 mt-1">
           <span className={`text-[13px] font-medium tabular ${pnlUp ? "fund-rise" : pnlDown ? "fund-fall" : "text-muted-foreground"}`}>
-            {pnlUp ? "+" : ""}{currencySymbol}{calc.holdingPnlAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })} ({pnlUp ? "+" : ""}{(calc.holdingPnlPercent * 100).toFixed(2)}%)
+            {pnlUp ? "+" : ""}{sym}{calc.holdingPnlAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })} ({pnlUp ? "+" : ""}{(calc.holdingPnlPercent * 100).toFixed(2)}%)
           </span>
           <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium px-1.5 py-0.5 rounded-full ${
             isUp ? "fund-rise fund-rise-bg" : isDown ? "fund-fall fund-fall-bg" : "text-muted-foreground bg-muted"
@@ -77,7 +78,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-[11px]">买入本金</span>
           <span className="font-medium tabular text-card-foreground text-[11px]">
-            {currencySymbol}{calc.totalCost.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
+            {sym}{calc.totalCost.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
             <EditPurchasesModal holding={holding} onUpdate={onUpdatePurchases} />
           </span>
         </div>
@@ -90,13 +91,13 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-[11px]">平均成本</span>
           <span className="font-medium tabular text-card-foreground text-[11px]">
-            {currencySymbol}{calc.avgCost.toFixed(navDecimals)}
+            {sym}{calc.avgCost.toFixed(navDecimals)}
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-[11px]">{isFund ? "当前净值" : "当前价格"}</span>
           <span className="font-medium tabular text-card-foreground text-[11px]">
-            {currencySymbol}{holding.currentNav.toFixed(navDecimals)}
+            {sym}{holding.currentNav.toFixed(navDecimals)}
           </span>
         </div>
       </div>
@@ -104,7 +105,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       {/* Footer: today PnL merged + update time */}
       <div className="flex items-center justify-between px-4 pb-3 text-muted-foreground text-[11px]">
         <span className={`tabular ${todayUp ? "fund-rise" : todayDown ? "fund-fall" : ""}`}>
-          当日盈亏: {todayUp ? "+" : ""}{currencySymbol}{calc.todayPnlAmount.toFixed(2)} ({isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%)
+          当日盈亏: {todayUp ? "+" : ""}{sym}{calc.todayPnlAmount.toFixed(2)} ({isUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%)
         </span>
         <span className="tabular">更新于 {holding.updatedAt}</span>
       </div>
