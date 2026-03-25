@@ -8,19 +8,39 @@ export interface HoldingCalc {
   holdingPnlAmount: number;
   holdingPnlPercent: number;
   todayPnlAmount: number;
+  realizedPnl: number;
 }
 
 export function calcHolding(h: FundHolding): HoldingCalc {
   const purchases = h.purchases || [];
   let totalShares = 0;
   let totalCost = 0;
+  let realizedPnl = h.realizedPnl || 0;
+
+  // Process transactions in order
+  let runningShares = 0;
+  let runningCost = 0;
 
   for (const p of purchases) {
-    if (p.buyNav > 0) {
-      totalShares += p.amount / p.buyNav;
+    const txType = p.type || "buy"; // backward compat
+    if (txType === "buy") {
+      const shares = p.buyNav > 0 ? p.amount / p.buyNav : 0;
+      runningShares += shares;
+      runningCost += p.amount;
+    } else {
+      // sell
+      const sellShares = p.shares || (p.buyNav > 0 ? p.amount / p.buyNav : 0);
+      const avgCostAtSale = runningShares > 0 ? runningCost / runningShares : 0;
+      const costBasis = sellShares * avgCostAtSale;
+      const sellProceeds = sellShares * p.buyNav;
+      // realized PnL already accumulated in h.realizedPnl via state updates
+      runningShares = Math.max(0, runningShares - sellShares);
+      runningCost = runningShares > 0 ? runningShares * avgCostAtSale : 0;
     }
-    totalCost += p.amount;
   }
+
+  totalShares = runningShares;
+  totalCost = runningCost;
 
   const avgCost = totalShares > 0 ? totalCost / totalShares : 0;
   const currentValue = totalShares * h.currentNav;
@@ -38,5 +58,6 @@ export function calcHolding(h: FundHolding): HoldingCalc {
     holdingPnlAmount,
     holdingPnlPercent,
     todayPnlAmount,
+    realizedPnl,
   };
 }
