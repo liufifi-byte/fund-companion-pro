@@ -18,5 +18,6 @@ export interface FundHolding {
   dayChangePercent: number;
   updatedAt: string;
   currency?: string;
+  costPrice?: number;
   topHoldings?: FundTopHolding[];
 }
