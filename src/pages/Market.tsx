@@ -3,12 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  YAxis,
-} from "recharts";
+import SplitSparkline from "@/components/SplitSparkline";
 
 interface HistoryPoint {
   t: number;
