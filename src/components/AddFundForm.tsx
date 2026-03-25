@@ -164,13 +164,15 @@ export default function AddFundForm({ onAdd }: AddFundFormProps) {
             </div>
           </div>
         )}
-        <div className="w-32">
-          <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            买入日期
-            <span className="text-muted-foreground/60 ml-0.5">(选填)</span>
-          </label>
-          <Input type="date" value={buyDate} onChange={(e) => setBuyDate(e.target.value)} className="h-10 text-xs" />
-        </div>
+        {isFund && (
+          <div className="w-32">
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              买入日期
+              <span className="text-muted-foreground/60 ml-0.5">(选填)</span>
+            </label>
+            <Input type="date" value={buyDate} onChange={(e) => setBuyDate(e.target.value)} className="h-10 text-xs" />
+          </div>
+        )}
         <Button type="submit" disabled={loading} className="h-10 px-5 shrink-0">
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
           {loading ? "查询中" : "添加"}
