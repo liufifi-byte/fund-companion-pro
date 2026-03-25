@@ -65,6 +65,10 @@ export default function Index() {
     saveHoldings(holdings);
   }, [holdings]);
 
+  useEffect(() => {
+    saveTransactions(transactions);
+  }, [transactions]);
+
   const addHolding = (h: FundHolding) => {
     setHoldings((prev) => [h, ...prev]);
   };
