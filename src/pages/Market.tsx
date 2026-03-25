@@ -33,6 +33,12 @@ const INDICES = [
   { symbol: "^IXIC", label: "纳斯达克指数" },
 ];
 
+const RANGES = [
+  { value: "5d", label: "1周" },
+  { value: "1mo", label: "1月" },
+  { value: "3mo", label: "3月" },
+] as const;
+
 export default function Market() {
   const [indices, setIndices] = useState<MarketIndex[]>(
     INDICES.map((i) => ({
@@ -45,14 +51,14 @@ export default function Market() {
     }))
   );
   const [refreshing, setRefreshing] = useState(false);
-
+  const [range, setRange] = useState<string>("1mo");
   const fetchAll = useCallback(async () => {
     setRefreshing(true);
     const results = await Promise.all(
       INDICES.map(async (idx) => {
         try {
           const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-            body: { symbol: idx.symbol, range: "1mo" },
+            body: { symbol: idx.symbol, range },
           });
           if (error || !data || data.error) {
             return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
@@ -72,7 +78,7 @@ export default function Market() {
     );
     setIndices(results);
     setRefreshing(false);
-  }, []);
+  }, [range]);
 
   useEffect(() => {
     fetchAll();
@@ -110,6 +116,20 @@ export default function Market() {
             <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />
             刷新
           </Button>
+        </div>
+
+        <div className="flex items-center gap-1 mb-4">
+          {RANGES.map((r) => (
+            <Button
+              key={r.value}
+              variant={range === r.value ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-7 px-3"
+              onClick={() => setRange(r.value)}
+            >
+              {r.label}
+            </Button>
+          ))}
         </div>
 
         <div className="grid gap-3">
