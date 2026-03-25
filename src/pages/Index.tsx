@@ -13,7 +13,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const STORAGE_KEY = "fund-holdings";
 
 function migrateHolding(h: any): FundHolding {
-  if (h.purchases && h.purchases.length > 0) return h as FundHolding;
+  if (h.purchases && h.purchases.length > 0) {
+    // Ensure all purchases have a type field
+    const migrated = h.purchases.map((p: any) => ({ ...p, type: p.type || "buy" }));
+    return { ...h, purchases: migrated } as FundHolding;
+  }
   const today = new Date().toISOString().slice(0, 10);
   return {
     ...h,
@@ -21,6 +25,7 @@ function migrateHolding(h: any): FundHolding {
       date: h.costPrice ? today : today,
       amount: h.buyAmount || 0,
       buyNav: h.costPrice || h.buyNav || h.currentNav || 1,
+      type: "buy" as const,
     }],
   };
 }
