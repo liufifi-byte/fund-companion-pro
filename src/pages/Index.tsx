@@ -73,6 +73,14 @@ export default function Index() {
     setHoldings((prev) => [h, ...prev]);
   };
 
+  const addTransaction = (tx: Transaction) => {
+    setTransactions((prev) => [...prev, tx]);
+  };
+
+  const removePosition = (code: string) => {
+    setTransactions((prev) => prev.filter((tx) => tx.assetCode !== code));
+  };
+
   const removeHolding = (id: string) => {
     setHoldings((prev) => prev.filter((h) => h.id !== id));
   };
