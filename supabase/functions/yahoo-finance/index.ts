@@ -20,7 +20,7 @@ serve(async (req) => {
       );
     }
 
-    const interval = chartRange === "1mo" ? "1d" : chartRange === "3mo" ? "1d" : "1d";
+    const interval = reqRange === "1d" ? "5m" : "1d";
     const reqRange = chartRange || "1d";
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${reqRange}`;
     const res = await fetch(url, {
