@@ -8,7 +8,7 @@ import EditPurchasesModal from "@/components/EditPurchasesModal";
 interface FundListItemProps {
   holding: FundHolding;
   onRemove: (id: string) => void;
-  onUpdatePurchases: (id: string, purchases: Purchase[]) => void;
+  onUpdatePurchases: (id: string, purchases: Purchase[], realizedPnl?: number) => void;
 }
 
 export default function FundListItem({ holding, onRemove, onUpdatePurchases }: FundListItemProps) {
