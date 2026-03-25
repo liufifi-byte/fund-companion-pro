@@ -118,6 +118,20 @@ export default function Market() {
           </Button>
         </div>
 
+        <div className="flex items-center gap-1 mb-4">
+          {RANGES.map((r) => (
+            <Button
+              key={r.value}
+              variant={range === r.value ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-7 px-3"
+              onClick={() => setRange(r.value)}
+            >
+              {r.label}
+            </Button>
+          ))}
+        </div>
+
         <div className="grid gap-3">
           {indices.map((idx) => {
             const isUp = (idx.change ?? 0) >= 0;
