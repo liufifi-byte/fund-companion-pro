@@ -62,6 +62,8 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       chartRef.current = null;
     }
 
+    const isIntraday = typeof data[0]?.time === "number";
+
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height,
@@ -69,6 +71,19 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "#999",
         fontSize: 12,
+      },
+      localization: {
+        timeFormatter: (timestamp: number) => {
+          const date = new Date(timestamp * 1000);
+          return date.toLocaleString("zh-CN", {
+            timeZone: "Asia/Shanghai",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          });
+        },
       },
       grid: {
         vertLines: { color: "#F0F0F0" },
@@ -82,8 +97,16 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       },
       timeScale: {
         borderColor: "#F0F0F0",
-        timeVisible: typeof data[0]?.time === "number",
+        timeVisible: isIntraday,
         secondsVisible: false,
+        tickMarkFormatter: (timestamp: number, tickMarkType: number) => {
+          const date = new Date(timestamp * 1000);
+          const opts: Intl.DateTimeFormatOptions = { timeZone: "Asia/Shanghai", hour12: false };
+          if (tickMarkType <= 1) {
+            return date.toLocaleDateString("zh-CN", { ...opts, month: "short", day: "numeric" });
+          }
+          return date.toLocaleTimeString("zh-CN", { ...opts, hour: "2-digit", minute: "2-digit" });
+        },
       },
     });
 
@@ -204,8 +227,15 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
 
   const formatTime = (t: string | number) => {
     if (typeof t === "string") return t;
-    const d = new Date(t * 1000);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    return new Date(t * 1000).toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   };
 
   return (
