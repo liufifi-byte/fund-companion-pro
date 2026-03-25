@@ -29,9 +29,37 @@ function saveHoldings(h: FundHolding[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
 }
 
+function loadTransactions(): Transaction[] {
+  try {
+    const raw = localStorage.getItem(TX_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+    // First time: seed with mock data
+    localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(mockTransactions));
+    return mockTransactions;
+  } catch {
+    return mockTransactions;
+  }
+}
+
+function saveTransactions(txs: Transaction[]) {
+  localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(txs));
+}
+
+// Mock current prices for transaction-based positions
+const MOCK_PRICES: Record<string, CurrentPrice> = {
+  CRWV: { code: "CRWV", price: 56.80, dayChangePercent: 1.25, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
+  "110011": { code: "110011", price: 5.38, dayChangePercent: -0.56, currency: "CNY", updatedAt: new Date().toLocaleString("zh-CN") },
+  "BTC-USD": { code: "BTC-USD", price: 87350.00, dayChangePercent: 2.10, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
+  AAPL: { code: "AAPL", price: 195.20, dayChangePercent: 0.85, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
+};
+
 export default function Index() {
   const [holdings, setHoldings] = useState<FundHolding[]>(loadHoldings);
+  const [transactions, setTransactions] = useState<Transaction[]>(loadTransactions);
+  const [currentPrices] = useState<Record<string, CurrentPrice>>(MOCK_PRICES);
   const [refreshing, setRefreshing] = useState(false);
+
+  const positions = usePortfolioCalculation(transactions, currentPrices);
 
   useEffect(() => {
     saveHoldings(holdings);
