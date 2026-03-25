@@ -28,7 +28,7 @@ const MACRO_DATA: MacroIndicator[] = [
     value: 4.38,
     change: 0.05,
     changePercent: 1.15,
-    description: "美国10年期国债收益率，是全球资产定价的基准利率，被称为"无风险利率之锚"。",
+    description: "美国10年期国债收益率，是全球资产定价的基准利率，被称为'无风险利率之锚'。",
     getTransmission: (change: number) =>
       change >= 0
         ? "当前美债收益率上行。资金机会成本增加，通常会压制高估值的科技股(纳指)和加密货币(Web3资产)，利空风险资产。"
@@ -72,7 +72,7 @@ const MACRO_DATA: MacroIndicator[] = [
     value: 32.5,
     change: 4.8,
     changePercent: 17.33,
-    description: "VIX指数衡量市场对标普500未来30天波动率的预期，又称"恐慌指数"。",
+    description: "VIX指数衡量市场对标普500未来30天波动率的预期，又称'恐慌指数'。",
     getTransmission: (_change: number, value: number) => {
       if (value > 30)
         return "市场处于极度恐慌状态，可能出现非理性抛售，关注左侧建仓机会。历史数据显示VIX>30后6个月内市场大概率反弹。";
