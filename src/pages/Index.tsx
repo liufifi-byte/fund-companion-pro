@@ -45,9 +45,8 @@ export default function Index() {
   useEffect(() => { saveHoldings(holdings); }, [holdings]);
 
   const addHolding = (h: FundHolding) => setHoldings((prev) => [h, ...prev]);
-  const updatePurchases = (id: string, purchases: Purchase[]) => {
-    setHoldings((prev) => prev.map((h) => h.id !== id ? h : { ...h, purchases }));
-    toast.success("买入记录已更新");
+  const updatePurchases = (id: string, purchases: Purchase[], realizedPnl?: number) => {
+    setHoldings((prev) => prev.map((h) => h.id !== id ? h : { ...h, purchases, ...(realizedPnl !== undefined ? { realizedPnl } : {}) }));
   };
   const removeHolding = (id: string) => setHoldings((prev) => prev.filter((h) => h.id !== id));
 
