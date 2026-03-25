@@ -29,6 +29,7 @@ const INDICES = [
   { symbol: "DX-Y.NYB", label: "美元指数" },
   { symbol: "GC=F", label: "黄金" },
   { symbol: "BZ=F", label: "布伦特原油" },
+  { symbol: "BTC-USD", label: "比特币" },
   { symbol: "^KS11", label: "韩国综合指数" },
   { symbol: "^IXIC", label: "纳斯达克指数" },
 ];
