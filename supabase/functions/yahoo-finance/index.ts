@@ -6,6 +6,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function rangeToInterval(range: string): string {
+  switch (range) {
+    case "1d":
+      return "5m";
+    case "5d":
+      return "1h";
+    case "1mo":
+    case "3mo":
+    default:
+      return "1d";
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,7 +34,7 @@ serve(async (req) => {
     }
 
     const reqRange = chartRange || "1d";
-    const interval = reqRange === "1d" ? "5m" : "1d";
+    const interval = rangeToInterval(reqRange);
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${reqRange}`;
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -50,9 +63,30 @@ serve(async (req) => {
     const change = price - prevClose;
     const changePercent = prevClose ? (change / prevClose) * 100 : 0;
 
-    // Extract historical close prices for chart
-    const closes = result.indicators?.quote?.[0]?.close || [];
+    const quote = result.indicators?.quote?.[0] || {};
+    const opens = quote.open || [];
+    const highs = quote.high || [];
+    const lows = quote.low || [];
+    const closes = quote.close || [];
     const timestamps = result.timestamp || [];
+
+    // Build OHLC array – use date string for daily, unix timestamp for intraday
+    const useUnix = interval !== "1d";
+    const ohlc = timestamps
+      .map((t: number, i: number) => {
+        const o = opens[i];
+        const h = highs[i];
+        const l = lows[i];
+        const c = closes[i];
+        if (o == null || h == null || l == null || c == null) return null;
+        const time = useUnix
+          ? t
+          : new Date(t * 1000).toISOString().slice(0, 10);
+        return { time, open: o, high: h, low: l, close: c };
+      })
+      .filter(Boolean);
+
+    // Legacy history for backward compat (sparkline)
     const history = timestamps
       .map((t: number, i: number) => ({ t, c: closes[i] }))
       .filter((d: { t: number; c: number | null }) => d.c !== null);
@@ -67,6 +101,7 @@ serve(async (req) => {
         change,
         changePercent,
         marketTime: meta.regularMarketTime,
+        ohlc,
         history,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
