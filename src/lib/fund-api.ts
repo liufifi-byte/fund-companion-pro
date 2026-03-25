@@ -125,20 +125,4 @@ export function normalizeStockSymbol(input: string, market: string): string {
   }
 }
 
-export function calcProfitLoss(holding: FundHolding) {
-  const shares = holding.buyAmount / holding.buyNav;
-  const currentValue = shares * holding.currentNav;
-  const profit = currentValue - holding.buyAmount;
-  const profitPercent = (profit / holding.buyAmount) * 100;
-  return { profit, profitPercent, currentValue, shares };
-}
-
-/** Calculate daily P&L from dayChangePercent and current value */
-export function calcDailyPL(holding: FundHolding) {
-  const { currentValue } = calcProfitLoss(holding);
-  // dailyPL = currentValue - previousValue
-  // previousValue = currentValue / (1 + dayChangePercent/100)
-  const dayChange = holding.dayChangePercent / 100;
-  const dailyPL = currentValue * dayChange / (1 + dayChange);
-  return dailyPL;
-}
+// Legacy calc functions removed — use calcHolding from @/lib/holding-calc instead

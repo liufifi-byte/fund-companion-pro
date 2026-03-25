@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FundHolding } from "@/types/fund";
+import { FundHolding, Purchase } from "@/types/fund";
 import { Transaction, CurrentPrice } from "@/types/transaction";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
@@ -16,10 +16,26 @@ import { mockTransactions } from "@/data/mockTransactions";
 const STORAGE_KEY = "fund-holdings";
 const TX_STORAGE_KEY = "transaction-ledger";
 
+function migrateHolding(h: any): FundHolding {
+  if (h.purchases && h.purchases.length > 0) return h as FundHolding;
+  // Legacy migration: convert buyAmount/buyNav to purchases array
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    ...h,
+    purchases: [{
+      date: h.costPrice ? today : today,
+      amount: h.buyAmount || 0,
+      buyNav: h.costPrice || h.buyNav || h.currentNav || 1,
+    }],
+  };
+}
+
 function loadHoldings(): FundHolding[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return parsed.map(migrateHolding);
   } catch {
     return [];
   }
@@ -33,7 +49,6 @@ function loadTransactions(): Transaction[] {
   try {
     const raw = localStorage.getItem(TX_STORAGE_KEY);
     if (raw) return JSON.parse(raw);
-    // First time: seed with mock data
     localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(mockTransactions));
     return mockTransactions;
   } catch {
@@ -45,7 +60,6 @@ function saveTransactions(txs: Transaction[]) {
   localStorage.setItem(TX_STORAGE_KEY, JSON.stringify(txs));
 }
 
-// Mock current prices for transaction-based positions
 const MOCK_PRICES: Record<string, CurrentPrice> = {
   CRWV: { code: "CRWV", price: 56.80, dayChangePercent: 1.25, currency: "USD", updatedAt: new Date().toLocaleString("zh-CN") },
   "110011": { code: "110011", price: 5.38, dayChangePercent: -0.56, currency: "CNY", updatedAt: new Date().toLocaleString("zh-CN") },
@@ -61,43 +75,19 @@ export default function Index() {
 
   const positions = usePortfolioCalculation(transactions, currentPrices);
 
-  useEffect(() => {
-    saveHoldings(holdings);
-  }, [holdings]);
+  useEffect(() => { saveHoldings(holdings); }, [holdings]);
+  useEffect(() => { saveTransactions(transactions); }, [transactions]);
 
-  useEffect(() => {
-    saveTransactions(transactions);
-  }, [transactions]);
+  const addHolding = (h: FundHolding) => setHoldings((prev) => [h, ...prev]);
 
-  const addHolding = (h: FundHolding) => {
-    setHoldings((prev) => [h, ...prev]);
+  const updatePurchases = (id: string, purchases: Purchase[]) => {
+    setHoldings((prev) => prev.map((h) => h.id !== id ? h : { ...h, purchases }));
+    toast.success("买入记录已更新");
   };
 
-  const addTransaction = (tx: Transaction) => {
-    setTransactions((prev) => [...prev, tx]);
-  };
-
-  const removePosition = (code: string) => {
-    setTransactions((prev) => prev.filter((tx) => tx.assetCode !== code));
-  };
-
-  const removeHolding = (id: string) => {
-    setHoldings((prev) => prev.filter((h) => h.id !== id));
-  };
-
-  const updateAmount = (id: string, newAmount: number) => {
-    setHoldings((prev) =>
-      prev.map((h) => (h.id !== id ? h : { ...h, buyAmount: newAmount }))
-    );
-    toast.success("金额已更新");
-  };
-
-  const updateCostPrice = (id: string, costPrice: number) => {
-    setHoldings((prev) =>
-      prev.map((h) => (h.id !== id ? h : { ...h, costPrice }))
-    );
-    toast.success("成本价已更新");
-  };
+  const addTransaction = (tx: Transaction) => setTransactions((prev) => [...prev, tx]);
+  const removePosition = (code: string) => setTransactions((prev) => prev.filter((tx) => tx.assetCode !== code));
+  const removeHolding = (id: string) => setHoldings((prev) => prev.filter((h) => h.id !== id));
 
   const refreshAll = async () => {
     if (holdings.length === 0) return;
@@ -107,25 +97,11 @@ export default function Index() {
         if (h.type === "stock") {
           const info = await fetchStockInfo(h.code);
           if (!info) return h;
-          return {
-            ...h,
-            currentNav: info.price,
-            dayChangePercent: info.changePercent,
-            updatedAt: info.updateTime,
-          };
+          return { ...h, currentNav: info.price, dayChangePercent: info.changePercent, updatedAt: info.updateTime };
         } else {
-          const [info, topHoldings] = await Promise.all([
-            fetchFundInfo(h.code),
-            fetchFundHoldings(h.code),
-          ]);
+          const [info, topHoldings] = await Promise.all([fetchFundInfo(h.code), fetchFundHoldings(h.code)]);
           if (!info) return h;
-          return {
-            ...h,
-            currentNav: info.estimatedNav,
-            dayChangePercent: info.changePercent,
-            updatedAt: info.updateTime,
-            topHoldings: topHoldings.length > 0 ? topHoldings : h.topHoldings,
-          };
+          return { ...h, currentNav: info.estimatedNav, dayChangePercent: info.changePercent, updatedAt: info.updateTime, topHoldings: topHoldings.length > 0 ? topHoldings : h.topHoldings };
         }
       })
     );
@@ -161,16 +137,8 @@ export default function Index() {
         {/* Holdings header */}
         {holdings.length > 0 && (
           <div className="flex items-center justify-between mb-4 fade-in-up" style={{ animationDelay: "150ms" }}>
-            <h2 className="text-sm font-medium text-muted-foreground">
-              持仓 · {holdings.length} 只
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshAll}
-              disabled={refreshing}
-              className="text-xs h-8"
-            >
+            <h2 className="text-sm font-medium text-muted-foreground">持仓 · {holdings.length} 只</h2>
+            <Button variant="ghost" size="sm" onClick={refreshAll} disabled={refreshing} className="text-xs h-8">
               <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />
               刷新
             </Button>
@@ -181,39 +149,31 @@ export default function Index() {
         {holdings.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {holdings.map((h, i) => (
-              <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdateAmount={updateAmount} onUpdateCostPrice={updateCostPrice} index={i} />
+              <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} index={i} />
             ))}
           </div>
         ) : (
           <div className="text-center py-16 fade-in-up" style={{ animationDelay: "200ms" }}>
             <BarChart3 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">
-              选择基金或股票，输入代码和买入金额开始跟踪
-            </p>
+            <p className="text-sm text-muted-foreground">选择基金或股票，输入代码和买入金额开始跟踪</p>
           </div>
         )}
 
         {/* Transaction-based positions */}
         <div className="flex items-center justify-between mb-4 mt-8 fade-in-up">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            交易账本 · {positions.filter(p => p.quantity > 0).length} 只持仓
-          </h2>
+          <h2 className="text-sm font-medium text-muted-foreground">交易账本 · {positions.filter(p => p.quantity > 0).length} 只持仓</h2>
           <AddTransactionModal onAdd={addTransaction} />
         </div>
 
         {positions.filter(p => p.quantity > 0).length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            {positions
-              .filter((p) => p.quantity > 0)
-              .map((p, i) => (
-                <PositionCard key={p.assetCode} position={p} onRemove={removePosition} index={i} />
-              ))}
+            {positions.filter((p) => p.quantity > 0).map((p, i) => (
+              <PositionCard key={p.assetCode} position={p} onRemove={removePosition} index={i} />
+            ))}
           </div>
         ) : (
           <div className="text-center py-8 fade-in-up">
-            <p className="text-sm text-muted-foreground">
-              点击"记一笔"添加交易记录
-            </p>
+            <p className="text-sm text-muted-foreground">点击"记一笔"添加交易记录</p>
           </div>
         )}
       </div>
