@@ -51,7 +51,7 @@ export default function Market() {
     }))
   );
   const [refreshing, setRefreshing] = useState(false);
-
+  const [range, setRange] = useState<string>("1mo");
   const fetchAll = useCallback(async () => {
     setRefreshing(true);
     const results = await Promise.all(
