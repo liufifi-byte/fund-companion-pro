@@ -3,7 +3,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  YAxis,
+} from "recharts";
+
+interface HistoryPoint {
+  t: number;
+  c: number;
+}
 
 interface MarketIndex {
   symbol: string;
@@ -11,6 +21,7 @@ interface MarketIndex {
   price: number | null;
   change: number | null;
   changePercent: number | null;
+  history: HistoryPoint[];
   loading: boolean;
 }
 
@@ -24,7 +35,14 @@ const INDICES = [
 
 export default function Market() {
   const [indices, setIndices] = useState<MarketIndex[]>(
-    INDICES.map((i) => ({ ...i, price: null, change: null, changePercent: null, loading: true }))
+    INDICES.map((i) => ({
+      ...i,
+      price: null,
+      change: null,
+      changePercent: null,
+      history: [],
+      loading: true,
+    }))
   );
   const [refreshing, setRefreshing] = useState(false);
 
@@ -34,20 +52,21 @@ export default function Market() {
       INDICES.map(async (idx) => {
         try {
           const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-            body: { symbol: idx.symbol },
+            body: { symbol: idx.symbol, range: "1mo" },
           });
           if (error || !data || data.error) {
-            return { ...idx, price: null, change: null, changePercent: null, loading: false };
+            return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
           }
           return {
             ...idx,
             price: data.price,
             change: data.change,
             changePercent: data.changePercent,
+            history: (data.history || []) as HistoryPoint[],
             loading: false,
           };
         } catch {
-          return { ...idx, price: null, change: null, changePercent: null, loading: false };
+          return { ...idx, price: null, change: null, changePercent: null, history: [], loading: false };
         }
       })
     );
@@ -94,36 +113,75 @@ export default function Market() {
         </div>
 
         <div className="grid gap-3">
-          {indices.map((idx) => (
-            <Card key={idx.symbol} className="overflow-hidden">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{idx.label}</p>
-                  <p className="text-xs text-muted-foreground">{idx.symbol}</p>
-                </div>
-                {idx.loading ? (
-                  <div className="h-10 w-24 animate-pulse rounded bg-muted" />
-                ) : (
-                  <div className="text-right">
-                    <p className="text-base font-bold tabular-nums text-foreground">
-                      {formatPrice(idx.price)}
-                    </p>
-                    <p
-                      className={`text-xs font-medium tabular-nums ${
-                        idx.change === null
-                          ? "text-muted-foreground"
-                          : idx.change >= 0
-                          ? "text-[hsl(var(--fund-rise))]"
-                          : "text-[hsl(var(--fund-fall))]"
-                      }`}
-                    >
-                      {formatChange(idx.change)} {formatPercent(idx.changePercent)}
-                    </p>
+          {indices.map((idx) => {
+            const isUp = (idx.change ?? 0) >= 0;
+            const chartColor = idx.change === null
+              ? "hsl(var(--muted-foreground))"
+              : isUp
+              ? "hsl(var(--fund-rise))"
+              : "hsl(var(--fund-fall))";
+
+            return (
+              <Card key={idx.symbol} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{idx.label}</p>
+                      <p className="text-xs text-muted-foreground">{idx.symbol}</p>
+                    </div>
+                    {idx.loading ? (
+                      <div className="h-10 w-24 animate-pulse rounded bg-muted" />
+                    ) : (
+                      <div className="text-right">
+                        <p className="text-base font-bold tabular-nums text-foreground">
+                          {formatPrice(idx.price)}
+                        </p>
+                        <p
+                          className={`text-xs font-medium tabular-nums ${
+                            idx.change === null
+                              ? "text-muted-foreground"
+                              : isUp
+                              ? "text-[hsl(var(--fund-rise))]"
+                              : "text-[hsl(var(--fund-fall))]"
+                          }`}
+                        >
+                          {formatChange(idx.change)} {formatPercent(idx.changePercent)}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Sparkline chart */}
+                  {idx.loading ? (
+                    <div className="h-16 w-full animate-pulse rounded bg-muted" />
+                  ) : idx.history.length > 1 ? (
+                    <div className="h-16 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={idx.history} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id={`grad-${idx.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={chartColor} stopOpacity={0.25} />
+                              <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <YAxis domain={["dataMin", "dataMax"]} hide />
+                          <Area
+                            type="monotone"
+                            dataKey="c"
+                            stroke={chartColor}
+                            strokeWidth={1.5}
+                            fill={`url(#grad-${idx.symbol})`}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
