@@ -41,15 +41,16 @@ export default function Index() {
 
   const updateAmount = (id: string, newAmount: number) => {
     setHoldings((prev) =>
-      prev.map((h) => {
-        if (h.id !== id) return h;
-        // Recalculate buyNav to keep shares ratio consistent with new amount
-        // shares = buyAmount / buyNav, keep currentNav the same
-        // New approach: just update buyAmount, buyNav stays same
-        return { ...h, buyAmount: newAmount };
-      })
+      prev.map((h) => (h.id !== id ? h : { ...h, buyAmount: newAmount }))
     );
     toast.success("金额已更新");
+  };
+
+  const updateCostPrice = (id: string, costPrice: number) => {
+    setHoldings((prev) =>
+      prev.map((h) => (h.id !== id ? h : { ...h, costPrice }))
+    );
+    toast.success("成本价已更新");
   };
 
   const refreshAll = async () => {
@@ -134,7 +135,7 @@ export default function Index() {
         {holdings.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {holdings.map((h, i) => (
-              <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdateAmount={updateAmount} index={i} />
+              <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdateAmount={updateAmount} onUpdateCostPrice={updateCostPrice} index={i} />
             ))}
           </div>
         ) : (
