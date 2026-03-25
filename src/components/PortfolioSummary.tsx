@@ -1,5 +1,6 @@
 import { FundHolding } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
+import { toCNY } from "@/lib/currency";
 
 interface PortfolioSummaryProps {
   holdings: FundHolding[];
@@ -19,20 +20,19 @@ function PnlText({ value, percent, prefix = "" }: { value: number; percent: numb
 export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
   if (holdings.length === 0) return null;
 
-  const calcs = holdings.map(calcHolding);
-  const totalValue = calcs.reduce((s, c) => s + c.currentValue, 0);
-  const totalCost = calcs.reduce((s, c) => s + c.totalCost, 0);
+  const calcs = holdings.map((h) => ({ calc: calcHolding(h), currency: h.currency || "CNY" }));
+  const totalValue = calcs.reduce((s, c) => s + toCNY(c.calc.currentValue, c.currency), 0);
+  const totalCost = calcs.reduce((s, c) => s + toCNY(c.calc.totalCost, c.currency), 0);
   const totalPnl = totalValue - totalCost;
   const totalPnlPercent = totalCost > 0 ? (totalPnl / totalCost) * 100 : 0;
-  const totalDailyPnl = calcs.reduce((s, c) => s + c.todayPnlAmount, 0);
+  const totalDailyPnl = calcs.reduce((s, c) => s + toCNY(c.calc.todayPnlAmount, c.currency), 0);
   const totalDailyPercent = totalValue > 0 ? (totalDailyPnl / (totalValue - totalDailyPnl)) * 100 : 0;
 
-  // Mobile: compact bar
-  // Desktop: full 2x2 card
   return (
     <>
       {/* Mobile compact bar */}
       <div className="md:hidden bg-card rounded-lg border px-4 py-3 fade-in-up">
+        <div className="text-[9px] text-muted-foreground mb-1">折合人民币</div>
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[10px] text-muted-foreground mb-0.5">总市值</div>
@@ -57,6 +57,7 @@ export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
 
       {/* Desktop full card */}
       <div className="hidden md:block bg-card rounded-lg border p-5 fade-in-up">
+        <div className="text-[10px] text-muted-foreground mb-2">折合人民币</div>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-xs text-muted-foreground mb-1">总持仓市值</div>
