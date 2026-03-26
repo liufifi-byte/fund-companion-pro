@@ -72,7 +72,7 @@ serve(async (req) => {
 
     // Build OHLC array – use date string for daily, unix timestamp for intraday
     const useUnix = interval !== "1d";
-    const ohlc = timestamps
+    const ohlcRaw = timestamps
       .map((t: number, i: number) => {
         const o = opens[i];
         const h = highs[i];
@@ -85,6 +85,13 @@ serve(async (req) => {
         return { time, open: o, high: h, low: l, close: c };
       })
       .filter(Boolean);
+
+    // Deduplicate by time – keep last occurrence (most recent data)
+    const seenTimes = new Map();
+    for (const bar of ohlcRaw) {
+      seenTimes.set(String(bar.time), bar);
+    }
+    const ohlc = Array.from(seenTimes.values());
 
     // Legacy history for backward compat (sparkline)
     const history = timestamps
