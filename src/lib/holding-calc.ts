@@ -8,6 +8,7 @@ export interface HoldingCalc {
   holdingPnlAmount: number;
   holdingPnlPercent: number;
   todayPnlAmount: number;
+  todayPnlPercent: number;
   realizedPnl: number;
 }
 
@@ -68,6 +69,10 @@ export function calcHolding(h: FundHolding): HoldingCalc {
   const holdingPnlAmount = currentValue - totalCost;
   const holdingPnlPercent = totalCost > 0 ? holdingPnlAmount / totalCost : 0;
 
+  // Derive today's PnL % from the actual PnL amount
+  const prevValue = currentValue - todayPnlAmount;
+  const todayPnlPercent = prevValue > 0 ? (todayPnlAmount / prevValue) * 100 : 0;
+
   return {
     totalShares,
     totalCost,
@@ -76,6 +81,7 @@ export function calcHolding(h: FundHolding): HoldingCalc {
     holdingPnlAmount,
     holdingPnlPercent,
     todayPnlAmount,
+    todayPnlPercent,
     realizedPnl,
   };
 }

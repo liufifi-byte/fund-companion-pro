@@ -35,7 +35,7 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
               {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
             </div>
             <div className={`text-[11px] font-medium tabular truncate ${pnlColorClass(calc.todayPnlAmount)}`}>
-              {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
+              {formatPnlFull(calc.todayPnlAmount, calc.todayPnlPercent, sym)}
             </div>
           </div>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
