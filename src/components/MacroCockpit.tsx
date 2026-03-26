@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useImperativeHandle, forwardRef, useRef } from "react";
 import { Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -12,15 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 /* ───────── types ───────── */
 interface IndicatorConfig {
   id: string;
-  symbol: string;       // yahoo symbol for API
+  symbol: string;
   label: string;
-  displaySymbol: string; // shown on card
+  displaySymbol: string;
   type: "realtime" | "periodic";
-  /** static text instead of API, e.g. Fed rate */
   staticValue?: string;
   expected?: number;
-  periodicLabel?: string;  // e.g. "月度数据"
-  publishDate?: string;    // e.g. "2026-03-12"
+  periodicLabel?: string;
+  publishDate?: string;
   description: string;
   getTransmission: (change: number, value: number) => string;
 }
@@ -29,7 +27,7 @@ interface IndicatorData {
   price: number | null;
   change: number | null;
   changePercent: number | null;
-  updatedAt: string | null; // "HH:mm"
+  updatedAt: string | null;
   loading: boolean;
 }
 
@@ -168,7 +166,6 @@ const GROUPS: { title: string; indicators: IndicatorConfig[] }[] = [
   },
 ];
 
-// flatten for data fetching
 const ALL_INDICATORS = GROUPS.flatMap((g) => g.indicators);
 const REALTIME_SYMBOLS = ALL_INDICATORS.filter(
   (i) => i.type === "realtime" && i.symbol
@@ -216,7 +213,7 @@ function IndicatorCard({ config, data }: { config: IndicatorConfig; data: Indica
   const isPeriodic = config.type === "periodic";
   const value = isStatic ? null : data.price;
   const isUp = (data.change ?? 0) >= 0;
-  const transmission = config.getTransmission(data.change ?? 0, value ?? (isStatic ? 0 : 0));
+  const transmission = config.getTransmission(data.change ?? 0, value ?? 0);
 
   const displayValue = isStatic
     ? config.staticValue!
@@ -288,7 +285,6 @@ function IndicatorCard({ config, data }: { config: IndicatorConfig; data: Indica
             </>
           )}
 
-          {/* Footer: update time or publish date */}
           <div className="mt-1.5 flex items-center justify-between">
             <p className="text-[10px] text-muted-foreground/70 leading-tight truncate">
               {config.label}
@@ -331,24 +327,24 @@ function IndicatorCard({ config, data }: { config: IndicatorConfig; data: Indica
 }
 
 /* ───────── main component ───────── */
-export default function MacroCockpit() {
+const MacroCockpit = forwardRef(function MacroCockpit(_props, ref) {
   const [dataMap, setDataMap] = useState<Record<string, IndicatorData>>(() => {
     const init: Record<string, IndicatorData> = {};
     ALL_INDICATORS.forEach((i) => {
       init[i.id] = { price: null, change: null, changePercent: null, updatedAt: null, loading: !i.staticValue };
     });
-    // static indicators pre-filled
     init.cpi = { price: 3.2, change: null, changePercent: null, updatedAt: null, loading: false };
     init.fedrate = { price: null, change: null, changePercent: null, updatedAt: null, loading: false };
     return init;
   });
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   const fetchAll = useCallback(async () => {
     const results = await Promise.all(
       REALTIME_SYMBOLS.map(async ({ id, symbol }) => {
         try {
           const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-            body: { symbol, range: "1d" },
+            body: { symbol, range: "1d", _t: Date.now() },
           });
           if (error || !data || data.error) {
             return { id, price: null, change: null, changePercent: null, updatedAt: null };
@@ -377,12 +373,39 @@ export default function MacroCockpit() {
     });
   }, []);
 
+  // Expose refresh to parent
+  useImperativeHandle(ref, () => ({ refresh: fetchAll }), [fetchAll]);
+
+  // Initial fetch
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
 
-  // expose fetcher for parent to call on refresh
-  // Parent (Market page) passes its own refresh; we just auto-fetch on mount
+  // Auto-refresh every 60s when page is visible
+  useEffect(() => {
+    const startInterval = () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(fetchAll, 60_000);
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchAll(); // immediate refresh on tab focus
+        startInterval();
+      } else {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+      }
+    };
+
+    startInterval();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [fetchAll]);
+
   return (
     <section className="mb-6">
       <SentimentBar data={dataMap} />
@@ -401,4 +424,6 @@ export default function MacroCockpit() {
       ))}
     </section>
   );
-}
+});
+
+export default MacroCockpit;
