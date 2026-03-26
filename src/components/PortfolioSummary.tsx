@@ -20,9 +20,8 @@ export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
   const totalPnl = totalValue - totalCost;
   const totalPnlPercent = calcHoldingPnlPct(totalPnl, totalCost);
   const totalDailyPnl = calcs.reduce((s, c) => s + toCNY(c.calc.todayPnlAmount, c.currency), 0);
-  // prevDayValue = totalValue - totalDailyPnl, so dailyPct = totalDailyPnl / prevDayValue
   const prevDayValue = totalValue - totalDailyPnl;
-  const totalDailyPercent = prevDayValue !== 0 ? (totalDailyPnl / Math.abs(prevDayValue)) * 100 : 0;
+  const totalDailyPercent = prevDayValue > 0 ? (totalDailyPnl / prevDayValue) * 100 : 0;
 
   return (
     <>

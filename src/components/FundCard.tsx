@@ -91,7 +91,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       {/* Footer: today PnL + update time — overflow-safe */}
       <div className="flex items-baseline justify-between px-4 pb-3 gap-2 flex-nowrap min-w-0 text-[12px] text-muted-foreground">
         <span className={`tabular whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 ${pnlColorClass(calc.todayPnlAmount)}`}>
-          今日 {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
+          今日 {formatPnlFull(calc.todayPnlAmount, calc.todayPnlPercent, sym)}
         </span>
         <span className="tabular whitespace-nowrap shrink-0">更新于 {formatUpdateTime(holding.updatedAt)}</span>
       </div>
