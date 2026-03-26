@@ -71,7 +71,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
   const ma10Data = useMemo(() => calcMA(cleanData, 10), [cleanData]);
 
   useEffect(() => {
-    if (!containerRef.current || data.length === 0) return;
+    if (!containerRef.current || cleanData.length === 0) return;
 
     // Clean up previous
     if (chartRef.current) {
@@ -79,7 +79,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       chartRef.current = null;
     }
 
-    const isIntraday = typeof data[0]?.time === "number";
+    const isIntraday = typeof cleanData[0]?.time === "number";
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
@@ -140,7 +140,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       wickDownColor: "#2EAA5E",
     });
 
-    candleSeries.setData(data as any);
+    candleSeries.setData(cleanData as any);
     candleRef.current = candleSeries;
 
     // MA5
@@ -220,7 +220,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       chart.remove();
       chartRef.current = null;
     };
-  }, [data, height, previousClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cleanData, height, previousClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle MA visibility without recreating chart
   useEffect(() => {
