@@ -35,9 +35,10 @@ serve(async (req) => {
 
     const reqRange = chartRange || "1d";
     const interval = rangeToInterval(reqRange);
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${reqRange}`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=${interval}&range=${reqRange}&_t=${Date.now()}`;
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
+      cache: "no-store",
     });
 
     if (!res.ok) {

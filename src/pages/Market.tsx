@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { RefreshCw, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -69,21 +69,29 @@ export default function Market() {
     }))
   );
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [range, setRange] = useState<string>("1mo");
   const [showAddInput, setShowAddInput] = useState(false);
   const [newSymbol, setNewSymbol] = useState("");
   const [adding, setAdding] = useState(false);
+  const lastUpdatedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const macroCockpitRef = useRef<{ refresh: () => Promise<void> }>(null);
 
   const fetchAll = useCallback(async () => {
     const currentIndices = [...DEFAULT_INDICES, ...loadCustomSymbols()];
     setRefreshing(true);
+    setRefreshError(false);
+    let hasError = false;
+
     const results = await Promise.all(
       currentIndices.map(async (idx) => {
         try {
           const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-            body: { symbol: idx.symbol, range },
+            body: { symbol: idx.symbol, range, _t: Date.now() },
           });
           if (error || !data || data.error) {
+            hasError = true;
             return { ...idx, price: null, previousClose: null, change: null, changePercent: null, ohlc: [], loading: false, isCustom: !DEFAULT_SYMBOLS.has(idx.symbol) };
           }
           return {
@@ -97,17 +105,36 @@ export default function Market() {
             isCustom: !DEFAULT_SYMBOLS.has(idx.symbol),
           };
         } catch {
+          hasError = true;
           return { ...idx, price: null, previousClose: null, change: null, changePercent: null, ohlc: [], loading: false, isCustom: !DEFAULT_SYMBOLS.has(idx.symbol) };
         }
       })
     );
     setIndices(results);
     setRefreshing(false);
-  }, [range]);
+
+    if (hasError) {
+      setRefreshError(true);
+      toast({ title: "部分数据更新失败", variant: "destructive" });
+      setTimeout(() => setRefreshError(false), 3000);
+    } else {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      setLastUpdated(timeStr);
+      if (lastUpdatedTimerRef.current) clearTimeout(lastUpdatedTimerRef.current);
+      lastUpdatedTimerRef.current = setTimeout(() => setLastUpdated(null), 2000);
+    }
+  }, [range, toast]);
 
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  const handleRefresh = async () => {
+    // Refresh both charts and macro cockpit
+    const cockpitRefresh = macroCockpitRef.current?.refresh();
+    await Promise.all([fetchAll(), cockpitRefresh].filter(Boolean));
+  };
 
   const handleAddSymbol = async () => {
     const sym = newSymbol.trim().toUpperCase();
@@ -120,7 +147,7 @@ export default function Market() {
     setAdding(true);
     try {
       const { data, error } = await supabase.functions.invoke("yahoo-finance", {
-        body: { symbol: sym, range },
+        body: { symbol: sym, range, _t: Date.now() },
       });
       if (error || !data || data.error) {
         toast({
@@ -185,19 +212,26 @@ export default function Market() {
       <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-foreground tracking-tight">全球行情</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchAll}
-            disabled={refreshing}
-            className="text-xs h-8"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />
-            刷新
-          </Button>
+          <div className="flex items-center gap-2">
+            {lastUpdated && (
+              <span className="text-[11px] text-muted-foreground animate-in fade-in-0 duration-300">
+                已更新 {lastUpdated}
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className={`text-xs h-8 transition-colors ${refreshError ? "text-destructive hover:text-destructive" : ""}`}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshError ? "部分失败" : "刷新"}
+            </Button>
+          </div>
         </div>
 
-        <MacroCockpit />
+        <MacroCockpit ref={macroCockpitRef} />
 
         {/* Deep Charts section header */}
         <div className="flex items-center justify-between mb-3">
