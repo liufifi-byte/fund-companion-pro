@@ -73,7 +73,8 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
         fontSize: 12,
       },
       localization: {
-        timeFormatter: (timestamp: number) => {
+        timeFormatter: (timestamp: number | string) => {
+          if (typeof timestamp === "string") return timestamp;
           const date = new Date(timestamp * 1000);
           return date.toLocaleString("zh-CN", {
             timeZone: "Asia/Shanghai",
@@ -99,7 +100,8 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
         borderColor: "#F0F0F0",
         timeVisible: isIntraday,
         secondsVisible: false,
-        tickMarkFormatter: (timestamp: number, tickMarkType: number) => {
+        tickMarkFormatter: (timestamp: number | string, tickMarkType: number) => {
+          if (typeof timestamp === "string") return timestamp;
           const date = new Date(timestamp * 1000);
           const opts: Intl.DateTimeFormatOptions = { timeZone: "Asia/Shanghai", hour12: false };
           if (tickMarkType <= 1) {
