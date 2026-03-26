@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { currencySymbol } from "@/lib/currency";
-import { pnlColorClass, formatPnlFull } from "@/lib/pnl-color";
+import { pnlColorClass, formatPnlFull, formatUpdateTime } from "@/lib/pnl-color";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 
@@ -95,7 +95,7 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1">
               <EditPurchasesModal holding={holding} onUpdate={onUpdatePurchases} />
-              <span className="text-[10px] text-muted-foreground tabular">更新于 {holding.updatedAt}</span>
+              <span className="text-[10px] text-muted-foreground tabular">更新于 {formatUpdateTime(holding.updatedAt)}</span>
             </div>
             <button onClick={(e) => { e.stopPropagation(); onRemove(holding.id); }} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded active:scale-95" aria-label="删除">
               <Trash2 className="w-3.5 h-3.5" />
