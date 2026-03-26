@@ -186,15 +186,17 @@ function calcSentiment(data: Record<string, IndicatorData>): {
   const goldPct = data.gold?.changePercent ?? 0;
   const spxPct = data.spx?.changePercent ?? 0;
 
-  if (vixPrice > 30)
+  if (vixPrice > 25)
     return { sentiment: "panic", color: "hsl(var(--fund-rise))", text: "市场恐慌 VIX 偏高 · 建议关注防御性资产" };
   if (vixPrice >= 20 && goldPct > 0.5)
     return { sentiment: "risk_off", color: "hsl(30, 90%, 55%)", text: "避险情绪 黄金走强 · 美债受追捧" };
+  if (vixPrice >= 20)
+    return { sentiment: "risk_off", color: "hsl(30, 90%, 55%)", text: "避险情绪 VIX偏高 · 市场波动加剧" };
   if (vixPrice >= 15)
     return { sentiment: "neutral", color: "hsl(var(--muted-foreground))", text: "情绪中性 市场观望，波动率处于正常区间" };
   if (spxPct > 0)
     return { sentiment: "risk_on", color: "hsl(var(--fund-fall))", text: "风险偏好 股市走强 · 资金流入权益资产" };
-  return { sentiment: "neutral", color: "hsl(var(--muted-foreground))", text: "情绪中性 市场观望，波动率处于正常区间" };
+  return { sentiment: "risk_on", color: "hsl(var(--fund-fall))", text: "风险偏好 VIX低位 · 市场情绪乐观" };
 }
 
 /* ───────── sub-components ───────── */
