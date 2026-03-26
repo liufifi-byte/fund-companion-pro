@@ -8,11 +8,7 @@ interface PortfolioSummaryProps {
 }
 
 function PnlText({ value, percent, prefix = "" }: { value: number; percent: number; prefix?: string }) {
-  return (
-    <span className={`tabular ${pnlColorClass(value)}`}>
-      {formatPnlFull(value, percent, prefix)}
-    </span>
-  );
+  return <span className={`tabular ${pnlColorClass(value)}`}>{formatPnlFull(value, percent, prefix)}</span>;
 }
 
 export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
@@ -24,7 +20,9 @@ export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
   const totalPnl = totalValue - totalCost;
   const totalPnlPercent = calcHoldingPnlPct(totalPnl, totalCost);
   const totalDailyPnl = calcs.reduce((s, c) => s + toCNY(c.calc.todayPnlAmount, c.currency), 0);
-  const totalDailyPercent = totalValue > 0 ? (totalDailyPnl / (totalValue - totalDailyPnl)) * 100 : 0;
+  // prevDayValue = totalValue - totalDailyPnl, so dailyPct = totalDailyPnl / prevDayValue
+  const prevDayValue = totalValue - totalDailyPnl;
+  const totalDailyPercent = prevDayValue !== 0 ? (totalDailyPnl / Math.abs(prevDayValue)) * 100 : 0;
 
   return (
     <>
