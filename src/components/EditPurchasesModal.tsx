@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FundHolding, Purchase, TransactionType } from "@/types/fund";
 import { currencySymbol } from "@/lib/currency";
-import { calcHolding } from "@/lib/holding-calc";
+import { calcHoldingFromTx } from "@/utils/holdingCalculations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
