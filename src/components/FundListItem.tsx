@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { currencySymbol } from "@/lib/currency";
-import { pnlColorClass, formatPnl, formatPnlPercent } from "@/lib/pnl-color";
+import { pnlColorClass, formatPnlFull } from "@/lib/pnl-color";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 
@@ -23,24 +23,22 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
     <div className="bg-card rounded-lg border transition-shadow">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 py-3 text-left active:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-3 text-left active:bg-muted/50 transition-colors overflow-hidden"
       >
-        <div className="min-w-0 flex-1 mr-3">
+        <div className="min-w-0 flex-1 mr-2">
           <div className="font-medium text-card-foreground truncate text-[14px] leading-tight">{holding.name}</div>
           <div className="text-[11px] text-muted-foreground tabular">{holding.code}</div>
         </div>
-        <div className="text-right mr-4 shrink-0">
-          <div className="text-[13px] font-semibold tabular text-card-foreground">
-            {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-        <div className="text-right shrink-0 flex items-center gap-1.5">
-          <div>
-            <div className={`text-[12px] font-medium tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
-              {formatPnl(calc.todayPnlAmount, sym)}（{formatPnlPercent(holding.dayChangePercent)}）
+        <div className="text-right shrink-0 flex items-center gap-1">
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold tabular text-card-foreground truncate">
+              {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
+            </div>
+            <div className={`text-[11px] font-medium tabular truncate ${pnlColorClass(calc.todayPnlAmount)}`}>
+              {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
             </div>
           </div>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
         </div>
       </button>
 
@@ -48,14 +46,9 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
         <div className="border-t px-3 pb-3 pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           <div className="bg-muted rounded-md px-3 py-2 flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">累计收益</span>
-            <div className="text-right">
-              <span className={`text-[14px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
-                {formatPnl(calc.holdingPnlAmount, sym)}
-              </span>
-              <span className={`text-[12px] tabular ml-1 ${pnlColorClass(calc.holdingPnlAmount)}`}>
-                {formatPnlPercent(calc.holdingPnlPercent * 100)}
-              </span>
-            </div>
+            <span className={`text-[14px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+              {formatPnlFull(calc.holdingPnlAmount, calc.holdingPnlPercent * 100, sym)}
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">

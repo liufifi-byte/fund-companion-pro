@@ -14,3 +14,8 @@ export function formatPnlPercent(value: number): string {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(2)}%`;
 }
+
+/** Unified format: ±¥xxx.xx（±x.xx%） */
+export function formatPnlFull(amount: number, percent: number, sym: string): string {
+  return `${formatPnl(amount, sym)}（${formatPnlPercent(percent)}）`;
+}
