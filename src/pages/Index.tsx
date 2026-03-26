@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
 import AddFundForm from "@/components/AddFundForm";
 import FundCard from "@/components/FundCard";
 import FundListItem from "@/components/FundListItem";
 import PortfolioSummary from "@/components/PortfolioSummary";
 import { fetchFundInfo, fetchStockInfo, fetchFundHoldings } from "@/lib/fund-api";
-import { RefreshCw, BarChart3 } from "lucide-react";
+import { RefreshCw, BarChart3, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,7 +14,6 @@ const STORAGE_KEY = "fund-holdings";
 
 function migrateHolding(h: any): FundHolding {
   if (h.purchases && h.purchases.length > 0) {
-    // Ensure all purchases have a type field
     const migrated = h.purchases.map((p: any) => ({ ...p, type: p.type || "buy" }));
     return { ...h, purchases: migrated } as FundHolding;
   }
@@ -42,10 +41,37 @@ function saveHoldings(h: FundHolding[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(h));
 }
 
+type HoldingTab = "all" | "cn_fund" | "cn_stock" | "hk" | "us";
+
+const TABS: { value: HoldingTab; label: string }[] = [
+  { value: "all", label: "全部" },
+  { value: "cn_fund", label: "场外基金" },
+  { value: "cn_stock", label: "A股" },
+  { value: "hk", label: "港股" },
+  { value: "us", label: "美股" },
+];
+
+function inferTab(h: FundHolding): HoldingTab {
+  if (h.type === "fund") return "cn_fund";
+  const code = h.code.toUpperCase();
+  if (code.endsWith(".SS") || code.endsWith(".SZ")) return "cn_stock";
+  if (code.endsWith(".HK")) return "hk";
+  return "us";
+}
+
+const EMPTY_HINTS: Record<Exclude<HoldingTab, "all">, { sub: string }> = {
+  cn_fund: { sub: "输入基金代码和买入净值开始记录" },
+  cn_stock: { sub: "输入股票代码和买入价格开始记录" },
+  hk: { sub: "输入港股代码和买入价格(HK$)开始记录" },
+  us: { sub: "输入美股代码和买入价格($)开始记录" },
+};
+
 export default function Index() {
   const [holdings, setHoldings] = useState<FundHolding[]>(loadHoldings);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<HoldingTab>("all");
   const isMobile = useIsMobile();
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { saveHoldings(holdings); }, [holdings]);
 
@@ -76,6 +102,16 @@ export default function Index() {
     toast.success("已刷新全部数据");
   };
 
+  const filtered = activeTab === "all" ? holdings : holdings.filter((h) => inferTab(h) === activeTab);
+
+  const focusForm = () => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      const input = formRef.current?.querySelector("input");
+      input?.focus();
+    }, 400);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Sticky mobile header */}
@@ -99,7 +135,7 @@ export default function Index() {
 
       <div className="max-w-3xl mx-auto px-4 pt-4 md:pt-0">
         {/* Add form */}
-        <div className="mb-4 fade-in-up">
+        <div ref={formRef} className="mb-4 fade-in-up">
           <AddFundForm onAdd={addHolding} />
         </div>
 
@@ -108,27 +144,61 @@ export default function Index() {
           <PortfolioSummary holdings={holdings} />
         </div>
 
-        {/* Holdings header */}
+        {/* Holdings header with tabs */}
         {holdings.length > 0 && (
-          <div className="flex items-center justify-between mb-3 fade-in-up">
-            <h2 className="text-xs font-medium text-muted-foreground">持仓 · {holdings.length} 只</h2>
+          <div className="mb-3 fade-in-up">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xs font-medium text-muted-foreground">持仓 · {holdings.length} 只</h2>
+            </div>
+            <div className="flex gap-1 p-0.5 bg-muted rounded-lg w-fit">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    activeTab === tab.value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Holdings: list on mobile, grid on desktop */}
+        {/* Holdings list */}
         {holdings.length > 0 ? (
-          isMobile ? (
-            <div className="space-y-2">
-              {holdings.map((h) => (
-                <FundListItem key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} />
-              ))}
-            </div>
+          filtered.length > 0 ? (
+            isMobile ? (
+              <div className="space-y-2">
+                {filtered.map((h) => (
+                  <FundListItem key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filtered.map((h, i) => (
+                  <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} index={i} />
+                ))}
+              </div>
+            )
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {holdings.map((h, i) => (
-                <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} index={i} />
-              ))}
-            </div>
+            /* Empty state for specific tab */
+            activeTab !== "all" && (
+              <div className="text-center py-12 fade-in-up">
+                <div className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                  <PlusCircle className="w-5 h-5 text-muted-foreground/40" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-1">还没有添加持仓</p>
+                <p className="text-xs text-muted-foreground/70 mb-4">{EMPTY_HINTS[activeTab].sub}</p>
+                <Button variant="outline" size="sm" className="text-xs" onClick={focusForm}>
+                  <PlusCircle className="w-3.5 h-3.5 mr-1" />
+                  添加第一笔
+                </Button>
+              </div>
+            )
           )
         ) : (
           <div className="text-center py-12 fade-in-up">
