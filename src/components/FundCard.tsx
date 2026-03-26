@@ -93,7 +93,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       {/* Footer: today PnL + update time */}
       <div className="flex items-center justify-between px-4 pb-3 text-[12px] text-muted-foreground">
         <span className={`tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
-          今日 {formatPnlPercent(holding.dayChangePercent)} ({formatPnl(calc.todayPnlAmount, sym)})
+          今日 {formatPnl(calc.todayPnlAmount, sym)}（{formatPnlPercent(holding.dayChangePercent)}）
         </span>
         <span className="tabular">更新于 {holding.updatedAt}</span>
       </div>
