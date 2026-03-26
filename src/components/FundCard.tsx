@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FundHolding } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { currencySymbol } from "@/lib/currency";
-import { pnlColorClass, formatPnlFull } from "@/lib/pnl-color";
+import { pnlColorClass, formatPnlFull, formatUpdateTime } from "@/lib/pnl-color";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 import { Purchase } from "@/types/fund";
@@ -89,12 +89,12 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         </div>
       </div>
 
-      {/* Footer: today PnL + update time */}
-      <div className="flex items-center justify-between px-4 pb-3 text-[12px] text-muted-foreground">
-        <span className={`tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
+      {/* Footer: today PnL + update time — overflow-safe */}
+      <div className="flex items-baseline justify-between px-4 pb-3 gap-2 flex-nowrap min-w-0 text-[12px] text-muted-foreground">
+        <span className={`tabular whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 ${pnlColorClass(calc.todayPnlAmount)}`}>
           今日 {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
         </span>
-        <span className="tabular">更新于 {holding.updatedAt}</span>
+        <span className="tabular whitespace-nowrap shrink-0">更新于 {formatUpdateTime(holding.updatedAt)}</span>
       </div>
 
       {/* Expandable top holdings */}
