@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { currencySymbol } from "@/lib/currency";
+import { pnlColorClass, formatPnl, formatPnlPercent } from "@/lib/pnl-color";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 
@@ -17,12 +18,6 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
   const isFund = holding.type === "fund";
   const sym = currencySymbol(holding.currency);
   const navDecimals = isFund ? 4 : 2;
-
-  const pnlUp = calc.holdingPnlAmount > 0;
-  const pnlDown = calc.holdingPnlAmount < 0;
-  const todayUp = calc.todayPnlAmount > 0;
-  const todayDown = calc.todayPnlAmount < 0;
-  const dayUp = holding.dayChangePercent > 0;
 
   return (
     <div className="bg-card rounded-lg border transition-shadow">
@@ -41,8 +36,8 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
         </div>
         <div className="text-right shrink-0 flex items-center gap-1.5">
           <div>
-            <div className={`text-[12px] font-medium tabular ${todayUp ? "fund-rise" : todayDown ? "fund-fall" : "text-muted-foreground"}`}>
-              {todayUp ? "+" : ""}{sym}{calc.todayPnlAmount.toFixed(2)} {dayUp ? "+" : ""}{holding.dayChangePercent.toFixed(2)}%
+            <div className={`text-[12px] font-medium tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
+              {formatPnl(calc.todayPnlAmount, sym)} {formatPnlPercent(holding.dayChangePercent)}
             </div>
           </div>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
@@ -53,9 +48,14 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
         <div className="border-t px-3 pb-3 pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           <div className="bg-muted rounded-md px-3 py-2 flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">累计收益</span>
-            <span className={`text-[14px] font-semibold tabular ${pnlUp ? "fund-rise" : pnlDown ? "fund-fall" : "text-muted-foreground"}`}>
-              {pnlUp ? "+" : ""}{sym}{calc.holdingPnlAmount.toLocaleString("zh-CN", { minimumFractionDigits: 2 })} ({pnlUp ? "+" : ""}{(calc.holdingPnlPercent * 100).toFixed(2)}%)
-            </span>
+            <div className="text-right">
+              <span className={`text-[14px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+                {formatPnl(calc.holdingPnlAmount, sym)}
+              </span>
+              <span className={`text-[12px] tabular ml-1 ${pnlColorClass(calc.holdingPnlAmount)}`}>
+                {formatPnlPercent(calc.holdingPnlPercent * 100)}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -91,7 +91,7 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
               {holding.topHoldings.map((th, i) => (
                 <div key={i} className="flex items-center justify-between text-[11px]">
                   <span className="text-card-foreground truncate max-w-[60%]">{th.name}</span>
-                  <span className={`tabular font-medium ${th.changePercent > 0 ? "fund-rise" : th.changePercent < 0 ? "fund-fall" : "text-muted-foreground"}`}>
+                  <span className={`tabular font-medium ${pnlColorClass(th.changePercent)}`}>
                     {th.changePercent > 0 ? "+" : ""}{th.changePercent.toFixed(2)}%
                   </span>
                 </div>
