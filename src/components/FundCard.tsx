@@ -54,11 +54,9 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         </div>
         <div>
           <div className="text-[11px] text-muted-foreground mb-1">累计收益</div>
-          <div className={`text-[20px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
-            {formatPnl(calc.holdingPnlAmount, sym)}
-          </div>
-          <div className={`text-[13px] tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
-            {formatPnlPercent(calc.holdingPnlPercent * 100)}
+          <div className={`flex items-baseline gap-1 tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+            <span className="text-[20px] font-semibold shrink min-w-0">{formatPnl(calc.holdingPnlAmount, sym)}</span>
+            <span className="text-[13px] shrink-0">{formatPnlPercent(calc.holdingPnlPercent * 100)}</span>
           </div>
         </div>
       </div>
