@@ -17,15 +17,19 @@ function migrateHolding(h: any): FundHolding {
     const migrated = h.purchases.map((p: any) => ({ ...p, type: p.type || "buy" }));
     return { ...h, purchases: migrated } as FundHolding;
   }
-  const today = new Date().toISOString().slice(0, 10);
+  // Legacy data: use a far-past date so it's treated as "bought before today"
+  // This prevents wrong today-PnL calculation for migrated holdings
+  const legacyDate = "2000-01-01";
   return {
     ...h,
-    purchases: [{
-      date: h.costPrice ? today : today,
-      amount: h.buyAmount || 0,
-      buyNav: h.costPrice || h.buyNav || h.currentNav || 1,
-      type: "buy" as const,
-    }],
+    purchases: [
+      {
+        date: legacyDate,
+        amount: h.buyAmount || 0,
+        buyNav: h.costPrice || h.buyNav || h.currentNav || 1,
+        type: "buy" as const,
+      },
+    ],
   };
 }
 
@@ -34,7 +38,9 @@ function loadHoldings(): FundHolding[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     return JSON.parse(raw).map(migrateHolding);
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function saveHoldings(h: FundHolding[]) {
@@ -73,11 +79,15 @@ export default function Index() {
   const isMobile = useIsMobile();
   const formRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { saveHoldings(holdings); }, [holdings]);
+  useEffect(() => {
+    saveHoldings(holdings);
+  }, [holdings]);
 
   const addHolding = (h: FundHolding) => setHoldings((prev) => [h, ...prev]);
   const updatePurchases = (id: string, purchases: Purchase[], realizedPnl?: number) => {
-    setHoldings((prev) => prev.map((h) => h.id !== id ? h : { ...h, purchases, ...(realizedPnl !== undefined ? { realizedPnl } : {}) }));
+    setHoldings((prev) =>
+      prev.map((h) => (h.id !== id ? h : { ...h, purchases, ...(realizedPnl !== undefined ? { realizedPnl } : {}) })),
+    );
   };
   const removeHolding = (id: string) => setHoldings((prev) => prev.filter((h) => h.id !== id));
 
@@ -93,9 +103,15 @@ export default function Index() {
         } else {
           const [info, topHoldings] = await Promise.all([fetchFundInfo(h.code), fetchFundHoldings(h.code)]);
           if (!info) return h;
-          return { ...h, currentNav: info.estimatedNav, dayChangePercent: info.changePercent, updatedAt: info.updateTime, topHoldings: topHoldings.length > 0 ? topHoldings : h.topHoldings };
+          return {
+            ...h,
+            currentNav: info.estimatedNav,
+            dayChangePercent: info.changePercent,
+            updatedAt: info.updateTime,
+            topHoldings: topHoldings.length > 0 ? topHoldings : h.topHoldings,
+          };
         }
-      })
+      }),
     );
     setHoldings(updated);
     setRefreshing(false);
@@ -125,7 +141,13 @@ export default function Index() {
             <p className="text-[10px] md:text-xs text-muted-foreground hidden md:block">实时跟踪基金与股票涨跌盈亏</p>
           </div>
           {holdings.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={refreshAll} disabled={refreshing} className="text-xs h-8 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={refreshAll}
+              disabled={refreshing}
+              className="text-xs h-8 shrink-0"
+            >
               <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? "animate-spin" : ""}`} />
               刷新
             </Button>
@@ -180,12 +202,17 @@ export default function Index() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {filtered.map((h, i) => (
-                  <FundCard key={h.id} holding={h} onRemove={removeHolding} onUpdatePurchases={updatePurchases} index={i} />
+                  <FundCard
+                    key={h.id}
+                    holding={h}
+                    onRemove={removeHolding}
+                    onUpdatePurchases={updatePurchases}
+                    index={i}
+                  />
                 ))}
               </div>
             )
           ) : (
-            /* Empty state for specific tab */
             activeTab !== "all" && (
               <div className="text-center py-12 fade-in-up">
                 <div className="w-10 h-10 mx-auto mb-3 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
