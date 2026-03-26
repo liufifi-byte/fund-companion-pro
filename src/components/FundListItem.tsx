@@ -37,7 +37,7 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
         <div className="text-right shrink-0 flex items-center gap-1.5">
           <div>
             <div className={`text-[12px] font-medium tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
-              {formatPnl(calc.todayPnlAmount, sym)} {formatPnlPercent(holding.dayChangePercent)}
+              {formatPnl(calc.todayPnlAmount, sym)}（{formatPnlPercent(holding.dayChangePercent)}）
             </div>
           </div>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
