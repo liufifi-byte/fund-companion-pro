@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
-import { calcHoldingFromTx, formatPnlFull, formatUpdateTime, pnlColorClass } from "@/utils/holdingCalculations";
+import { calcHolding } from "@/lib/holding-calc";
+import { formatPnlFull, formatUpdateTime, pnlColorClass } from "@/utils/holdingCalculations";
 import { currencySymbol } from "@/lib/currency";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
@@ -13,7 +14,7 @@ interface FundListItemProps {
 
 export default function FundListItem({ holding, onRemove, onUpdatePurchases }: FundListItemProps) {
   const [expanded, setExpanded] = useState(false);
-  const calc = calcHoldingFromTx(holding);
+  const calc = calcHolding(holding);
   const isFund = holding.type === "fund";
   const sym = currencySymbol(holding.currency);
   const navDecimals = isFund ? 4 : 2;
@@ -33,8 +34,8 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
             <div className="text-[13px] font-semibold tabular text-card-foreground truncate">
               {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
             </div>
-            <div className={`text-[11px] font-medium tabular truncate ${pnlColorClass(calc.todayPnl)}`}>
-              {formatPnlFull(calc.todayPnl, calc.todayPnlPct, sym)}
+            <div className={`text-[11px] font-medium tabular truncate ${pnlColorClass(calc.todayPnlAmount)}`}>
+              {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
             </div>
           </div>
           {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
@@ -45,8 +46,8 @@ export default function FundListItem({ holding, onRemove, onUpdatePurchases }: F
         <div className="border-t px-3 pb-3 pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           <div className="bg-muted rounded-md px-3 py-2 flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">累计收益</span>
-            <span className={`text-[14px] font-semibold tabular ${pnlColorClass(calc.holdingPnl)}`}>
-              {formatPnlFull(calc.holdingPnl, calc.holdingPnlPct, sym)}
+            <span className={`text-[14px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+              {formatPnlFull(calc.holdingPnlAmount, calc.holdingPnlPercent * 100, sym)}
             </span>
           </div>
 

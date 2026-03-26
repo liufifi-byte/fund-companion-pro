@@ -1,5 +1,6 @@
 import { FundHolding } from "@/types/fund";
-import { calcHoldingFromTx, calcHoldingPnlPct, formatPnlFull, pnlColorClass } from "@/utils/holdingCalculations";
+import { calcHolding } from "@/lib/holding-calc";
+import { calcHoldingPnlPct, formatPnlFull, pnlColorClass } from "@/utils/holdingCalculations";
 import { toCNY } from "@/lib/currency";
 
 interface PortfolioSummaryProps {
@@ -17,12 +18,12 @@ function PnlText({ value, percent, prefix = "" }: { value: number; percent: numb
 export default function PortfolioSummary({ holdings }: PortfolioSummaryProps) {
   if (holdings.length === 0) return null;
 
-  const calcs = holdings.map((h) => ({ calc: calcHoldingFromTx(h), currency: h.currency || "CNY" }));
+  const calcs = holdings.map((h) => ({ calc: calcHolding(h), currency: h.currency || "CNY" }));
   const totalValue = calcs.reduce((s, c) => s + toCNY(c.calc.currentValue, c.currency), 0);
   const totalCost = calcs.reduce((s, c) => s + toCNY(c.calc.totalCost, c.currency), 0);
   const totalPnl = totalValue - totalCost;
   const totalPnlPercent = calcHoldingPnlPct(totalPnl, totalCost);
-  const totalDailyPnl = calcs.reduce((s, c) => s + toCNY(c.calc.todayPnl, c.currency), 0);
+  const totalDailyPnl = calcs.reduce((s, c) => s + toCNY(c.calc.todayPnlAmount, c.currency), 0);
   const totalDailyPercent = totalValue > 0 ? (totalDailyPnl / (totalValue - totalDailyPnl)) * 100 : 0;
 
   return (
