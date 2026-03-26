@@ -4,6 +4,7 @@ import { RefreshCw, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import CandlestickChart, { type OHLCPoint } from "@/components/CandlestickChart";
 import MacroCockpit from "@/components/MacroCockpit";
 
