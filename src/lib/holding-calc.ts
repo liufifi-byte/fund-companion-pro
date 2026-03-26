@@ -50,6 +50,17 @@ export function calcHolding(h: FundHolding): HoldingCalc {
   const today = getToday();
   let todayPnlAmount = 0;
 
+  if (import.meta.env.DEV) {
+    console.log("持仓调试", {
+      name: h.name,
+      currentPrice: h.currentNav,
+      prevClosePrice: yesterdayClose,
+      dailyChangePct: h.dayChangePercent,
+      currentValue,
+      todayPnl: 0,
+    });
+  }
+
   // Rebuild running state to know shares held at each tx point
   let sharesBeforeTx = 0;
   let costBeforeTx = 0;
@@ -87,6 +98,17 @@ export function calcHolding(h: FundHolding): HoldingCalc {
   const historicSharesStillHeld = totalShares - todayBoughtShares;
   if (historicSharesStillHeld > 0) {
     todayPnlAmount += (h.currentNav - yesterdayClose) * historicSharesStillHeld;
+  }
+
+  if (import.meta.env.DEV) {
+    console.log("持仓调试", {
+      name: h.name,
+      currentPrice: h.currentNav,
+      prevClosePrice: yesterdayClose,
+      dailyChangePct: h.dayChangePercent,
+      currentValue,
+      todayPnl: todayPnlAmount,
+    });
   }
 
   return {
