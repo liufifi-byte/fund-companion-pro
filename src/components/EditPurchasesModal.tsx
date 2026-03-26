@@ -86,7 +86,7 @@ export default function EditPurchasesModal({ holding, onUpdate }: Props) {
   };
 
   // Calculate current total shares for sell validation
-  const currentCalc = calcHolding({ ...holding, purchases, realizedPnl });
+  const currentCalc = calcHoldingFromTx({ ...holding, purchases, realizedPnl });
 
   const startAdding = (type: TransactionType) => {
     setAdding(type);
