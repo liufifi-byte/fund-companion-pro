@@ -50,11 +50,28 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
     point: OHLCPoint | null;
   }>({ visible: false, x: 0, y: 0, point: null });
 
-  const ma5Data = useMemo(() => calcMA(data, 5), [data]);
-  const ma10Data = useMemo(() => calcMA(data, 10), [data]);
+  // Deduplicate and sort by time to prevent lightweight-charts assertion errors
+  const cleanData = useMemo(() => {
+    const seen = new Set<string | number>();
+    return data
+      .slice()
+      .sort((a, b) => {
+        if (typeof a.time === "string" && typeof b.time === "string") return a.time < b.time ? -1 : a.time > b.time ? 1 : 0;
+        return (a.time as number) - (b.time as number);
+      })
+      .filter((d) => {
+        const key = String(d.time);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }, [data]);
+
+  const ma5Data = useMemo(() => calcMA(cleanData, 5), [cleanData]);
+  const ma10Data = useMemo(() => calcMA(cleanData, 10), [cleanData]);
 
   useEffect(() => {
-    if (!containerRef.current || data.length === 0) return;
+    if (!containerRef.current || cleanData.length === 0) return;
 
     // Clean up previous
     if (chartRef.current) {
@@ -62,7 +79,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       chartRef.current = null;
     }
 
-    const isIntraday = typeof data[0]?.time === "number";
+    const isIntraday = typeof cleanData[0]?.time === "number";
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
@@ -123,7 +140,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       wickDownColor: "#2EAA5E",
     });
 
-    candleSeries.setData(data as any);
+    candleSeries.setData(cleanData as any);
     candleRef.current = candleSeries;
 
     // MA5
@@ -203,7 +220,7 @@ export default function CandlestickChart({ data, previousClose, height = 220 }: 
       chart.remove();
       chartRef.current = null;
     };
-  }, [data, height, previousClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cleanData, height, previousClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle MA visibility without recreating chart
   useEffect(() => {
