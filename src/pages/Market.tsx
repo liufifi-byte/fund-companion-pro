@@ -52,6 +52,7 @@ const RANGES = [
 ] as const;
 
 export default function Market() {
+  const { toast } = useToast();
   const [customSymbols, setCustomSymbols] = useState(loadCustomSymbols);
   const allIndices = [...DEFAULT_INDICES, ...customSymbols.map((s) => ({ ...s, isCustom: true }))];
 
@@ -122,6 +123,11 @@ export default function Market() {
         body: { symbol: sym, range },
       });
       if (error || !data || data.error) {
+        toast({
+          title: "未找到该代码",
+          description: "请检查拼写。加密货币需加 -USD 后缀（如 SOL-USD），A股需加 .SS 或 .SZ 后缀。",
+          variant: "destructive",
+        });
         setAdding(false);
         return;
       }
