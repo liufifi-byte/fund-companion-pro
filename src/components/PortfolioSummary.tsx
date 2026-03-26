@@ -1,17 +1,16 @@
 import { FundHolding } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { toCNY } from "@/lib/currency";
-import { pnlColorClass } from "@/lib/pnl-color";
+import { pnlColorClass, formatPnlFull } from "@/lib/pnl-color";
 
 interface PortfolioSummaryProps {
   holdings: FundHolding[];
 }
 
 function PnlText({ value, percent, prefix = "" }: { value: number; percent: number; prefix?: string }) {
-  const sign = value >= 0 ? "+" : "";
   return (
     <span className={`tabular ${pnlColorClass(value)}`}>
-      {prefix}{sign}{Math.abs(value).toFixed(2)} ({sign}{percent.toFixed(2)}%)
+      {formatPnlFull(value, percent, prefix)}
     </span>
   );
 }

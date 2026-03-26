@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FundHolding } from "@/types/fund";
 import { calcHolding } from "@/lib/holding-calc";
 import { currencySymbol } from "@/lib/currency";
-import { pnlColorClass, formatPnl, formatPnlPercent } from "@/lib/pnl-color";
+import { pnlColorClass, formatPnlFull } from "@/lib/pnl-color";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
 import { Purchase } from "@/types/fund";
@@ -44,20 +44,19 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
 
       <div className="border-t mx-4" />
 
-      {/* Core data: market value (left) + cumulative PnL (right) */}
-      <div className="grid grid-cols-2 gap-4 px-4 py-3">
+      {/* Core data: market value + cumulative PnL stacked vertically */}
+      <div className="px-4 py-3 space-y-2">
         <div>
-          <div className="text-[11px] text-muted-foreground mb-1">持有市值</div>
-          <div className="text-[16px] tabular text-card-foreground">
+          <span className="text-[11px] text-muted-foreground mr-2">持有市值</span>
+          <span className="text-[16px] tabular text-card-foreground">
             {sym}{calc.currentValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 })}
-          </div>
+          </span>
         </div>
         <div>
-          <div className="text-[11px] text-muted-foreground mb-1">累计收益</div>
-          <div className={`flex items-baseline gap-1 tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
-            <span className="text-[20px] font-semibold shrink min-w-0">{formatPnl(calc.holdingPnlAmount, sym)}</span>
-            <span className="text-[13px] shrink-0">{formatPnlPercent(calc.holdingPnlPercent * 100)}</span>
-          </div>
+          <span className="text-[11px] text-muted-foreground mr-2">累计收益</span>
+          <span className={`text-[16px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+            {formatPnlFull(calc.holdingPnlAmount, calc.holdingPnlPercent * 100, sym)}
+          </span>
         </div>
       </div>
 
@@ -93,7 +92,7 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
       {/* Footer: today PnL + update time */}
       <div className="flex items-center justify-between px-4 pb-3 text-[12px] text-muted-foreground">
         <span className={`tabular ${pnlColorClass(calc.todayPnlAmount)}`}>
-          今日 {formatPnl(calc.todayPnlAmount, sym)}（{formatPnlPercent(holding.dayChangePercent)}）
+          今日 {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
         </span>
         <span className="tabular">更新于 {holding.updatedAt}</span>
       </div>
