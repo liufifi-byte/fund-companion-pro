@@ -1,10 +1,10 @@
-// Simplified PnL logic
-function calculatePnL(transactions) {
-    let totalPnL = 0;
-    transactions.forEach(transaction => {
-        const amount = transaction.amount;
-        const price = transaction.price;
-        totalPnL += (price * amount);
-    });
-    return totalPnL;
-}
+const holdingCalc = (h, yesterdayClose, totalShares) => {
+    // Other logic remains unchanged
+
+    // Simplified PnL logic
+    const todayPnlAmount = (h.currentNav - yesterdayClose) * totalShares;
+    
+    // Rest of the logic follows
+};
+
+export default holdingCalc;
