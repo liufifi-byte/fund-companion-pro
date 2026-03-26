@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FundHolding, Purchase } from "@/types/fund";
-import { calcHoldingFromTx, formatPnlAmount, formatPnlPct, formatPnlFull, formatUpdateTime, pnlColorClass } from "@/utils/holdingCalculations";
+import { calcHolding } from "@/lib/holding-calc";
+import { formatPnlFull, formatUpdateTime, pnlColorClass } from "@/utils/holdingCalculations";
 import { currencySymbol } from "@/lib/currency";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import EditPurchasesModal from "@/components/EditPurchasesModal";
@@ -14,7 +15,7 @@ interface FundCardProps {
 
 export default function FundCard({ holding, onRemove, onUpdatePurchases, index }: FundCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const calc = calcHoldingFromTx(holding);
+  const calc = calcHolding(holding);
   const isFund = holding.type === "fund";
   const sym = currencySymbol(holding.currency);
   const navDecimals = isFund ? 4 : 2;
@@ -52,8 +53,8 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
         </div>
         <div>
           <span className="text-[11px] text-muted-foreground mr-2">累计收益</span>
-          <span className={`text-[16px] font-semibold tabular ${pnlColorClass(calc.holdingPnl)}`}>
-            {formatPnlFull(calc.holdingPnl, calc.holdingPnlPct, sym)}
+          <span className={`text-[16px] font-semibold tabular ${pnlColorClass(calc.holdingPnlAmount)}`}>
+            {formatPnlFull(calc.holdingPnlAmount, calc.holdingPnlPercent * 100, sym)}
           </span>
         </div>
       </div>
@@ -89,8 +90,8 @@ export default function FundCard({ holding, onRemove, onUpdatePurchases, index }
 
       {/* Footer: today PnL + update time — overflow-safe */}
       <div className="flex items-baseline justify-between px-4 pb-3 gap-2 flex-nowrap min-w-0 text-[12px] text-muted-foreground">
-        <span className={`tabular whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 ${pnlColorClass(calc.todayPnl)}`}>
-          今日 {formatPnlFull(calc.todayPnl, calc.todayPnlPct, sym)}
+        <span className={`tabular whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0 ${pnlColorClass(calc.todayPnlAmount)}`}>
+          今日 {formatPnlFull(calc.todayPnlAmount, holding.dayChangePercent, sym)}
         </span>
         <span className="tabular whitespace-nowrap shrink-0">更新于 {formatUpdateTime(holding.updatedAt)}</span>
       </div>

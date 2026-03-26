@@ -61,8 +61,12 @@ serve(async (req) => {
     const meta = result.meta;
     const price = meta.regularMarketPrice;
     const prevClose = meta.chartPreviousClose ?? meta.previousClose;
-    const change = price - prevClose;
-    const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+    const change = typeof meta.regularMarketChange === "number"
+      ? meta.regularMarketChange
+      : (typeof price === "number" && typeof prevClose === "number" ? price - prevClose : 0);
+    const changePercent = typeof meta.regularMarketChangePercent === "number"
+      ? meta.regularMarketChangePercent * 100
+      : (typeof prevClose === "number" && prevClose !== 0 ? (change / prevClose) * 100 : 0);
 
     const quote = result.indicators?.quote?.[0] || {};
     const opens = quote.open || [];
